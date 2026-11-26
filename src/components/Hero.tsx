@@ -3,10 +3,9 @@ import { makeShot, renderStrip } from '../lib/render';
 import { getTemplate, TEMPLATES } from '../lib/templates';
 import type { Design, Shot } from '../lib/types';
 import { fontsReady } from '../lib/util';
-import { allFilled, pickFiles, useStore } from '../store';
+import { allFilled, enterBooth, pickFiles, useStore } from '../store';
 import { IconCamera, IconUpload } from './Icons';
 
-export const scrollToBooth = () => document.getElementById('booth')?.scrollIntoView({ behavior: 'smooth' });
 
 /** Demo "photos" for the hero fan: soft colour fields with a sitter silhouette. */
 let demo: Shot[] | null = null;
@@ -38,13 +37,13 @@ function Card({ id, style }: { id: string; style: React.CSSProperties }) {
 }
 
 export function Hero() {
-  const startCamera = () => { useStore.getState().patch({ step: 1, autoStartCam: true }); scrollToBooth(); };
+  const startCamera = () => enterBooth({ step: 1, autoStartCam: true });
   const upload = async () => {
     const st = useStore.getState();
     const added = await st.loadFiles(await pickFiles(true));
     if (!added) return;
+    enterBooth();
     st.goStep(allFilled(useStore.getState()) ? 2 : 1);
-    scrollToBooth();
   };
 
   return (
@@ -62,6 +61,7 @@ export function Hero() {
           <button className="btn big" onClick={upload}><IconUpload />Upload foto</button>
         </div>
       </div>
+      <a className="scroll-cue" href="#fitur">Lihat fitur ↓</a>
       <div className="fan" aria-hidden="true">
         <Card id="birthday" style={{ ['--r' as string]: '-12deg', ['--x' as string]: '-48%', zIndex: 1 }} />
         <Card id="film35" style={{ ['--r' as string]: '9deg', ['--x' as string]: '46%', zIndex: 2 }} />

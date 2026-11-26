@@ -11,19 +11,21 @@ import { useStore } from './store';
 
 export default function App() {
   const step = useStore(s => s.step);
+  const view = useStore(s => s.view);
   const infoRef = useRef<HTMLDialogElement>(null);
-  const boothRef = useRef<HTMLElement>(null);
 
-  // keep the booth in view when the step changes
-  // compare with the previous step (not a first-render flag): StrictMode runs effects twice on mount
-  const prevStep = useRef(step);
+  // browser Back/Forward move between the landing page and the booth
   useEffect(() => {
-    if (prevStep.current === step) return;
-    prevStep.current = step;
-    const el = boothRef.current; if (!el) return;
-    const top = el.getBoundingClientRect().top;
-    if (top < 0 || top > innerHeight * 0.5) el.scrollIntoView({ behavior: 'smooth' });
-  }, [step]);
+    const onPop = () => useStore.getState().patch({ view: history.state?.jbBooth ? 'booth' : 'landing' });
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  // the booth is a full-screen app; the landing page scrolls normally
+  useEffect(() => {
+    document.documentElement.classList.toggle('in-booth', view === 'booth');
+    window.scrollTo(0, 0);
+  }, [view]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -37,27 +39,36 @@ export default function App() {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
+  const info = () => infoRef.current?.showModal();
+
   return (
     <>
-      <Header onInfo={() => infoRef.current?.showModal()} />
-      <Marquee />
-      <main className="wrap">
-        <Hero />
-        <section className="app" id="booth" ref={boothRef} aria-label="Photobooth">
-          <Stepper />
-          {step === 1 && <CaptureStep />}
-          {step === 2 && <DesignStep />}
-          {step === 3 && <SaveStep />}
-        </section>
-        <Features />
-      </main>
-      <footer>
-        <div className="wrap">
-          <div className="big" aria-hidden="true">jepret.</div>
-          <span>jepret. · photobooth online</span>
-          <span>Semua proses terjadi di perangkatmu. Nggak ada foto yang diupload.</span>
+      {view === 'landing' ? (
+        <>
+          <Header onInfo={info} />
+          <Marquee />
+          <main className="wrap">
+            <Hero />
+            <Features />
+          </main>
+          <footer>
+            <div className="wrap">
+              <div className="big" aria-hidden="true">jepret.</div>
+              <span>jepret. · photobooth online</span>
+              <span>Semua proses terjadi di perangkatmu. Nggak ada foto yang diupload.</span>
+            </div>
+          </footer>
+        </>
+      ) : (
+        <div className="booth-shell">
+          <Header onInfo={info} booth><Stepper /></Header>
+          <main className="booth-main" aria-label="Photobooth">
+            {step === 1 && <CaptureStep />}
+            {step === 2 && <DesignStep />}
+            {step === 3 && <SaveStep />}
+          </main>
         </div>
-      </footer>
+      )}
       <InfoDialog ref={infoRef} />
       <Toast />
       <Busy />

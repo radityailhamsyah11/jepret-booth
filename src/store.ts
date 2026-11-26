@@ -23,6 +23,8 @@ interface State extends Design {
   step: Step;
   /** set when another step asks the capture step to open the camera as soon as it mounts */
   autoStartCam: boolean;
+  /** landing page, or the full-screen booth */
+  view: 'landing' | 'booth';
   toast: { msg: string; key: number } | null;
   busy: string | null;
 }
@@ -58,7 +60,7 @@ export const useStore = create<State & Actions>()((set, get) => ({
   caption: 'jepret booth', font: 'retro' as FontId, showDate: true, shape: 'auto', outline: false,
   stickers: [], selSlot: -1, selSticker: -1,
   sound: storage.get('jb-sound') !== '0', mirror: true, grid: false, timer: 3, facing: 'user', deviceId: null, shootMode: 'burst',
-  step: 1, autoStartCam: false, toast: null, busy: null,
+  step: 1, autoStartCam: false, view: 'landing', toast: null, busy: null,
 
   patch: p => set(p),
   showToast: msg => set({ toast: { msg, key: ++toastKey } }),
@@ -141,6 +143,17 @@ export const useStore = create<State & Actions>()((set, get) => ({
 
   restart: () => set({ shots: Array(MAX_PHOTOS).fill(null), stickers: [], selSlot: -1, selSticker: -1, target: 0, step: 1 }),
 }));
+
+/** Opens the full-screen booth (adds a history entry so the browser Back button returns to the landing page). */
+export function enterBooth(p: Partial<Pick<State, 'step' | 'autoStartCam'>> = {}) {
+  if (useStore.getState().view !== 'booth') history.pushState({ jbBooth: true }, '');
+  useStore.getState().patch({ view: 'booth', ...p });
+  window.scrollTo(0, 0);
+}
+export function leaveBooth() {
+  if (history.state?.jbBooth) history.back(); // popstate switches the view
+  else useStore.getState().patch({ view: 'landing' });
+}
 
 // sound effects respect the user's sound toggle
 export const sfx = {

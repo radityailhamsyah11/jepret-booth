@@ -52,31 +52,21 @@ export function TemplateCard({ t }: { t: Template }) {
   );
 }
 
-/** Horizontal, scrollable gallery of every template (capture step). */
-export function TemplateStrip() {
+/** Category chips + a scrollable grid of every template (booth side panel). */
+export function TemplatePicker({ onPicked }: { onPicked?: () => void }) {
   const layout = useStore(s => s.layout);
-  const ref = useRef<HTMLDivElement>(null);
-  const [cat, setCat] = useState<string>('all');
+  const [cat, setCat] = useState<string>(() => getTemplate(useStore.getState().layout).group);
   const groups = GROUPS.filter(g => TEMPLATES.some(t => t.group === g.id));
   const list = cat === 'all' ? TEMPLATES : TEMPLATES.filter(t => t.group === cat);
-  // keep the chosen template in view when it changes from elsewhere
-  useEffect(() => {
-    // scroll only the strip (scrollIntoView would also scroll the page on load)
-    const box = ref.current, el = box?.querySelector<HTMLElement>('[aria-pressed="true"]');
-    if (box && el) box.scrollTo({ left: el.offsetLeft - box.offsetLeft - 8, behavior: 'smooth' });
-  }, [layout, cat]);
+  const first = useRef(layout);
+  useEffect(() => { if (layout !== first.current) onPicked?.(); }, [layout]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <div className="tpl-strip-wrap">
-      <div className="tpl-strip-head">
-        <span className="eyebrow"><b>[02]</b> pilih template · {list.length}</span>
-        <div className="cats" role="tablist" aria-label="Kategori template">
-          <button className="chip" aria-pressed={cat === 'all'} onClick={() => setCat('all')}>Semua</button>
-          {groups.map(g => <button key={g.id} className="chip" aria-pressed={cat === g.id} onClick={() => setCat(g.id)}>{g.name}</button>)}
-        </div>
+    <div className="tpl-picker">
+      <div className="cats" role="tablist" aria-label="Kategori template">
+        <button className="chip" aria-pressed={cat === 'all'} onClick={() => setCat('all')}>Semua</button>
+        {groups.map(g => <button key={g.id} className="chip" aria-pressed={cat === g.id} onClick={() => setCat(g.id)}>{g.name}</button>)}
       </div>
-      <div className="tpl-strip" ref={ref}>
-        {list.map(t => <TemplateCard key={t.id} t={t} />)}
-      </div>
+      <div className="tpl-grid">{list.map(t => <TemplateCard key={t.id} t={t} />)}</div>
     </div>
   );
 }

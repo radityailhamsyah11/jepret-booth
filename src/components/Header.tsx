@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { sfx, useStore } from '../store';
+import { useState, type ReactNode } from 'react';
+import { leaveBooth, sfx, useStore } from '../store';
 import { storage } from '../lib/util';
 import { IconShield, IconSound, IconSun } from './Icons';
 
@@ -9,7 +9,8 @@ export function applyTheme(t: Theme | null) {
   else delete document.documentElement.dataset.theme;
 }
 
-export function Header({ onInfo }: { onInfo: () => void }) {
+/** `booth`: compact app bar — the logo goes back to the landing page and `children` (the stepper) sits in the middle. */
+export function Header({ onInfo, booth, children }: { onInfo: () => void; booth?: boolean; children?: ReactNode }) {
   const sound = useStore(s => s.sound);
   const patch = useStore(s => s.patch);
   const [, force] = useState(0);
@@ -25,9 +26,12 @@ export function Header({ onInfo }: { onInfo: () => void }) {
   };
 
   return (
-    <header className="top">
+    <header className={'top' + (booth ? ' booth-bar' : '')}>
       <div className="wrap">
-        <a className="logo" href="#" aria-label="Jepret Booth"><span className="dot" /><span>jepret<b>.</b></span></a>
+        {booth
+          ? <button className="logo logo-btn" onClick={leaveBooth} aria-label="Keluar booth, balik ke beranda" title="Balik ke beranda"><span className="back">←</span><span>jepret<b>.</b></span></button>
+          : <a className="logo" href="#" aria-label="Jepret Booth"><span className="dot" /><span>jepret<b>.</b></span></a>}
+        {children}
         <div className="top-actions">
           <button className="btn sm soft" onClick={toggleSound} aria-pressed={sound} title={sound ? 'Suara: nyala (M)' : 'Suara: mati (M)'}><IconSound on={sound} /></button>
           <button className="btn sm soft" onClick={toggleTheme} title="Ganti tema"><IconSun /></button>

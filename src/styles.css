@@ -337,3 +337,92 @@ dialog kbd{font:500 12px var(--f-mono);background:var(--surface-2);border:1px so
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+/* ================= landing: hero fills the first screen ================= */
+.hero{position:relative;min-height:calc(100svh - 62px - 36px);padding:28px 0 64px}
+.scroll-cue{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);font:500 11.5px var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:var(--muted);text-decoration:none;animation:bob 2.4s ease-in-out infinite}
+.scroll-cue:hover{color:var(--ink)}
+@keyframes bob{50%{transform:translate(-50%,5px)}}
+
+/* ================= full-screen booth ================= */
+html.in-booth,html.in-booth body{height:100%;overflow:hidden}
+.booth-shell{height:100svh;display:flex;flex-direction:column}
+header.top.booth-bar .wrap{max-width:none;padding:0 18px;height:60px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px}
+.booth-bar .stepper{margin:0;justify-self:center;width:min(640px,100%);gap:6px}
+.booth-bar .stepper button{padding:6px 12px;border-radius:12px;box-shadow:none}
+.booth-bar .stepper button[aria-current="step"]{box-shadow:2px 2px 0 var(--hard)}
+.booth-bar .stepper button .n{width:24px;height:24px;font-size:11px}
+.booth-bar .stepper button small{display:none}
+.logo-btn{background:none;border:0;padding:4px 6px 4px 0;font:400 26px/1 var(--f-retro);color:var(--ink);gap:8px;border-radius:10px}
+.logo-btn .back{font:500 16px var(--f-mono);color:var(--muted);transition:transform .15s}
+.logo-btn:hover .back{transform:translateX(-3px);color:var(--accent)}
+.booth-main{flex:1;min-height:0;padding:14px 18px 16px}
+.booth-main>.view{height:100%}
+
+/* capture: camera sized to the screen, controls always visible, side panel scrolls inside */
+.capture-view .capture{height:100%;grid-template-columns:minmax(0,1fr) 360px;grid-template-rows:minmax(0,1fr);gap:16px}
+.cap-main{display:flex;flex-direction:column;min-height:0;min-width:0}
+.stage-wrap{flex:1;min-height:0;container-type:size;display:grid;place-items:center}
+.stage-wrap .stage{width:min(100cqw,calc(100cqh * 4 / 3));aspect-ratio:4/3}
+.cap-main .filters-row{flex:none;padding-top:10px}
+.cap-main .controls{flex:none;margin-top:8px}
+.cam-select{appearance:none;background:var(--surface-2) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='7'><path d='M1 1l4 4 4-4' fill='none' stroke='%23999' stroke-width='1.6'/></svg>") no-repeat right 10px center;border:1px solid var(--line-2);border-radius:999px;padding:7px 28px 7px 12px;font-size:12.5px;font-weight:600;max-width:190px}
+.capture-view .rail{min-height:0;overflow-y:auto;gap:10px;padding:12px}
+.rail-tabs{width:100%;flex:none}
+.rail-tabs button{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rail-foot{position:sticky;bottom:-12px;flex:none;margin:0 -12px -12px;padding:10px 12px 12px;background:var(--surface);border-top:1px solid var(--line);display:flex}
+.rail-foot .btn{flex:1}
+.capture-view .live-pv canvas{max-height:min(340px,36vh)}
+.tpl-picker{display:flex;flex-direction:column;gap:10px}
+.tpl-picker .cats{flex-wrap:wrap;overflow:visible}
+.tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tpl-grid .tpl-art{height:110px}
+.tpl-grid .tpl-art canvas{max-height:100px}
+
+/* design: preview fills the height, the panel scrolls inside, nav pinned under it */
+.booth-main .studio{height:100%;grid-template-columns:minmax(0,1fr) 420px;grid-template-rows:minmax(0,1fr);align-items:stretch;gap:16px}
+.booth-main .preview{position:static;height:100%;padding:16px;justify-content:center;min-height:0}
+.booth-main .preview canvas{max-height:calc(100svh - 160px)}
+.booth-main .studio>div:last-child{display:flex;flex-direction:column;min-height:0}
+.booth-main .panel{flex:1;min-height:0;display:flex;flex-direction:column}
+.booth-main .tabpanel{flex:1;min-height:0;max-height:none;overflow-y:auto}
+.booth-main .nextbar{flex:none;margin-top:12px}
+
+/* save */
+.booth-main .save{height:100%;grid-template-rows:minmax(0,1fr);align-items:stretch;gap:16px}
+.booth-main .result{height:100%;min-height:0;padding:16px}
+.booth-main .result img,.booth-main .result video{max-height:calc(100svh - 140px)}
+.booth-main .outs{min-height:0;overflow-y:auto}
+
+/* ================= booth on phones / narrow screens: scroll, sticky shutter ================= */
+@media (max-width: 860px){
+  html.in-booth,html.in-booth body{height:auto;overflow:visible}
+  .booth-shell{height:auto;min-height:100svh}
+  header.top.booth-bar .wrap{grid-template-columns:auto 1fr;height:auto;padding:8px 12px 10px;row-gap:8px}
+  .booth-bar .top-actions{justify-self:end}
+  .booth-bar .stepper{grid-column:1/-1;grid-row:2;width:100%}
+  .booth-bar .stepper button{padding:6px 8px;gap:6px}
+  .booth-bar .stepper button strong{font-size:13px}
+  .booth-main{padding:10px 12px 0}
+  .booth-main>.view{height:auto}
+  .capture-view .capture,.booth-main .studio,.booth-main .save{grid-template-columns:1fr;grid-template-rows:none;height:auto;align-items:start}
+  .stage-wrap{container-type:normal;display:block}
+  .stage-wrap .stage{width:100%}
+  .cap-main .controls{position:sticky;bottom:0;z-index:8;margin:8px -12px 0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+  .cap-main .controls .group{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;width:100%}
+  .cap-main .controls .group>*{flex:none}
+  .shutter-wrap{width:100%;justify-content:space-between}
+  .shutter-wrap .lbl{text-align:left}
+  .capture-view .rail{overflow:visible;margin-bottom:16px}
+  .booth-main .preview{height:auto}
+  .booth-main .preview canvas{max-height:56vh}
+  .booth-main .panel{flex:none}
+  .booth-main .tabpanel{max-height:none;overflow:visible}
+  .booth-main .nextbar{position:sticky;bottom:0;z-index:8;margin:10px -12px 0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+  .booth-main .result{height:auto}
+  .booth-main .result img,.booth-main .result video{max-height:62vh}
+  .booth-main .outs{overflow:visible;padding-bottom:20px}
+  .hero{min-height:auto;padding:22px 0 56px;gap:18px}
+  .fan{order:1;height:min(380px,92vw)}
+  .scroll-cue{display:none}
+}

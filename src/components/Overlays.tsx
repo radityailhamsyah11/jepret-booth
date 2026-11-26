@@ -43,7 +43,7 @@ export function Features() {
   ];
   return (
     <>
-      <h2 className="section-title">Lebih dari <em>sekadar</em> strip.</h2>
+      <h2 className="section-title" id="fitur">Lebih dari <em>sekadar</em> strip.</h2>
       <section className="features">
         {items.map(([n, h, p]) => <div className="feat" key={n}><span className="num">[{n}]</span><h3>{h}</h3><p>{p}</p></div>)}
       </section>

@@ -8,7 +8,7 @@ import type { Shot } from '../lib/types';
 import { wait } from '../lib/util';
 import { activeShots, allFilled, filledCount, pickFiles, sfx, slotCount, useStore } from '../store';
 import { IconUpload } from './Icons';
-import { LivePreview, TemplateStrip } from './TemplateGallery';
+import { LivePreview, TemplatePicker } from './TemplateGallery';
 
 const thumbCache = new WeakMap<HTMLCanvasElement, Map<string, string>>();
 function thumbOf(shot: Shot, aspect: number, width = 240) {
@@ -45,6 +45,7 @@ export function CaptureStep() {
   const [dragging, setDragging] = useState(false);
   /** single mode: the slot just shot, waiting for "Ulang" / "Lanjut" */
   const [review, setReview] = useState<number | null>(null);
+  const [railTab, setRailTab] = useState<'strip' | 'template'>('strip');
 
   /** opens a camera and sets mirror to match it (selfie cams mirrored, rear / iPhone not) */
   const open = useCallback(async (deviceId: string | null) => {
@@ -171,10 +172,10 @@ export function CaptureStep() {
   const reviewShot = review != null ? shots[review] : null;
 
   return (
-    <div className="view active">
-      <TemplateStrip />
+    <div className="view active capture-view">
       <div className="capture">
-        <div>
+        <div className="cap-main">
+          <div className="stage-wrap">
           <div
             className={['stage', s.mirror && 'mirror', cam.live && 'live', s.grid && 'show-grid', dragging && 'dragging'].filter(Boolean).join(' ')}
             onDragEnter={e => { e.preventDefault(); setDragging(true); }}
@@ -212,6 +213,7 @@ export function CaptureStep() {
             <div className="hud"><span>SHOT {hudShot}/{n}</span><span>{cam.current ? camName(cam.current.label).toUpperCase() : ''} · {FILTERS[s.filter].name.toUpperCase()}</span></div>
             <div className="drop-hint">Lepas buat tambah foto</div>
           </div>
+          </div>
 
           <div className="filters-row" aria-label="Filter">
             {filters.map(k => <button key={k} className="chip" aria-pressed={s.filter === k} onClick={() => s.patch({ filter: k })}>{FILTERS[k].name}</button>)}
@@ -229,6 +231,12 @@ export function CaptureStep() {
               <button className="btn sm soft" aria-pressed={s.mirror} onClick={() => s.patch({ mirror: !s.mirror })}>Mirror</button>
               <button className="btn sm soft" aria-pressed={s.grid} onClick={() => s.patch({ grid: !s.grid })}>Grid</button>
               <button className="btn sm soft" onClick={flip} title="Ganti kamera (webcam / iPhone / depan-belakang)">⟲ Flip cam</button>
+              {cam.devices.length > 1 && (
+                <select className="cam-select" aria-label="Pilih kamera" title="Pakai iPhone? Di Mac, dekatkan iPhone (Continuity Camera), nanti muncul di sini."
+                  value={cam.current?.id ?? s.deviceId ?? ''} onChange={e => (cam.live ? open(e.target.value) : s.patch({ deviceId: e.target.value }))}>
+                  {cam.devices.map(d => <option key={d.id} value={d.id}>{camName(d.label)}</option>)}
+                </select>
+              )}
             </div>
             <div className="shutter-wrap">
               <div className="lbl"><strong>{shutterLbl}</strong><span>{busy ? 'Esc buat batal' : cam.live ? 'Spasi / tap' : 'Nyalain kamera dulu'}</span></div>
@@ -236,18 +244,14 @@ export function CaptureStep() {
               {s.shootMode === 'burst' && <button className="btn sm" disabled={!cam.live || busy} onClick={() => snap(false)}>Jepret 1</button>}
             </div>
           </div>
-          {cam.devices.length > 1 && (
-            <label className="cam-pick">
-              <span className="eyebrow">Kamera</span>
-              <select value={cam.current?.id ?? s.deviceId ?? ''} onChange={e => (cam.live ? open(e.target.value) : s.patch({ deviceId: e.target.value }))}>
-                {cam.devices.map(d => <option key={d.id} value={d.id}>{camName(d.label)}</option>)}
-              </select>
-              <small>Pakai iPhone? Di Mac, dekatkan iPhone (Continuity Camera), nanti muncul di sini.</small>
-            </label>
-          )}
         </div>
 
         <aside className="rail">
+          <div className="seg rail-tabs" role="tablist" aria-label="Panel">
+            <button role="tab" aria-pressed={railTab === 'strip'} onClick={() => setRailTab('strip')}>Strip kamu</button>
+            <button role="tab" aria-pressed={railTab === 'template'} onClick={() => setRailTab('template')}>Template · {tpl.name}</button>
+          </div>
+          {railTab === 'template' ? <TemplatePicker onPicked={() => setRailTab('strip')} /> : <>
           <LivePreview />
           <h4>Foto kamu <span>{filled}/{n} · {tpl.name}</span></h4>
           <div className={'slots' + (n === 1 ? ' one' : '')}>
@@ -272,12 +276,14 @@ export function CaptureStep() {
               );
             })}
           </div>
-          <p className="hint">Tap slot buat milih yang mau difoto ulang atau diganti.</p>
-          <div className="grow" />
           <button className="btn soft" onClick={upload}><IconUpload />Upload ke slot kosong</button>
-          <button className="btn primary" disabled={filled === 0} onClick={() => s.goStep(2)}>
-            {allFilled(s) || !filled ? 'Lanjut desain →' : `Lanjut desain (${filled}/${n}) →`}
-          </button>
+          </>}
+          <div className="grow" />
+          <div className="rail-foot">
+            <button className="btn primary" disabled={filled === 0} onClick={() => s.goStep(2)}>
+              {allFilled(s) || !filled ? 'Lanjut desain →' : `Lanjut desain (${filled}/${n}) →`}
+            </button>
+          </div>
         </aside>
       </div>
     </div>
