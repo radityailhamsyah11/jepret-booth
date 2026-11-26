@@ -15,9 +15,11 @@ export default function App() {
   const boothRef = useRef<HTMLElement>(null);
 
   // keep the booth in view when the step changes
-  const first = useRef(true);
+  // compare with the previous step (not a first-render flag): StrictMode runs effects twice on mount
+  const prevStep = useRef(step);
   useEffect(() => {
-    if (first.current) { first.current = false; return; }
+    if (prevStep.current === step) return;
+    prevStep.current = step;
     const el = boothRef.current; if (!el) return;
     const top = el.getBoundingClientRect().top;
     if (top < 0 || top > innerHeight * 0.5) el.scrollIntoView({ behavior: 'smooth' });
