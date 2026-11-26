@@ -135,7 +135,7 @@ export const useStore = create<State & Actions>()((set, get) => ({
   goStep: n => {
     const s = get();
     if (n > 1 && filledCount(s) === 0) return;
-    if (n === 3 && !allFilled(s)) { s.showToast(`Masih ada ${slotCount(s) - filledCount(s)} slot kosong. Tap slot di preview buat isi.`); n = 2; }
+    if (n === 3 && !allFilled(s)) s.showToast(`${slotCount(s) - filledCount(s)} slot kosong diisi ulang pakai foto yang udah ada ✨`);
     set({ step: n, selSticker: -1, ...(n === 1 ? { selSlot: -1 } : {}) });
   },
 

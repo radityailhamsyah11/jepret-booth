@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { renderStrip, stickerBox } from '../lib/render';
+import { fillMap, renderStrip, stickerBox } from '../lib/render';
 import { getTemplate, hitSlot as hitTplSlot } from '../lib/templates';
 import { clamp, fontsReady } from '../lib/util';
 import { designOf, pickFiles, useStore } from '../store';
@@ -53,6 +53,12 @@ export function DesignStep() {
     }
     return -1;
   };
+  /** a repeated (empty) slot edits the photo it repeats; with no photos at all, the slot itself */
+  const sourcePhoto = (p: number) => {
+    const st = useStore.getState(); if (st.shots[p]) return p;
+    const m = fillMap(st.shots, getTemplate(st.layout).photos)[p];
+    return m >= 0 ? m : p;
+  };
   /** slot index under the point (template slots, not photo indices) */
   const hitSlot = (p: { x: number; y: number }) => hitTplSlot(getTemplate(useStore.getState().layout), p.x, p.y);
 
@@ -65,7 +71,7 @@ export function DesignStep() {
       st.patch({ selSticker: si, selSlot: -1 }); setTab('sticker');
       return;
     }
-    const si2 = hitSlot(p), ci = si2 >= 0 ? getTemplate(st.layout).slots[si2].photo : -1;
+    const si2 = hitSlot(p), ci = si2 >= 0 ? sourcePhoto(getTemplate(st.layout).slots[si2].photo) : -1;
     st.patch({ selSticker: -1, selSlot: ci });
     const sh = ci >= 0 ? st.shots[ci] : null;
     if (sh) drag.current = { kind: 'pan', p0: p, ox0: sh.ox, oy0: sh.oy, i: ci, slot: si2 };
@@ -101,7 +107,7 @@ export function DesignStep() {
         st.updateSticker(si, { s: clamp(st.stickers[si].s * (e.deltaY < 0 ? 1.06 : 0.94), 0.4, 3) });
         st.patch({ selSticker: si }); return;
       }
-      const si2 = hitSlot(p), ci = si2 >= 0 ? getTemplate(st.layout).slots[si2].photo : -1, sh = ci >= 0 ? st.shots[ci] : null;
+      const si2 = hitSlot(p), ci = si2 >= 0 ? sourcePhoto(getTemplate(st.layout).slots[si2].photo) : -1, sh = ci >= 0 ? st.shots[ci] : null;
       if (sh) {
         e.preventDefault();
         st.updateShot(ci, { zoom: clamp(Math.round(sh.zoom * (e.deltaY < 0 ? 1.05 : 0.95) * 100) / 100, 1, 3) });

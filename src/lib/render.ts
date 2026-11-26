@@ -68,11 +68,30 @@ export const OVERLAY_LAYER: Layers = { bg: false, photos: false, decor: true, st
 /** Supplies the pixels for a slot (default: the filtered still). Must return an image slot.w×slot.h at `scale`. */
 export type CellSource = (slot: Slot, shot: Shot) => CanvasImageSource;
 
-export interface RenderOpts { marks?: Marks; layers?: Layers; cell?: CellSource }
+/**
+ * For each photo index: itself when taken, otherwise one of the taken photos, repeated in order
+ * (3 photos in a 4-photo template → the 4th slot shows photo 1). -1 when nothing is taken yet.
+ */
+export function fillMap(shots: (Shot | null)[], count: number): number[] {
+  const taken = shots.map((s, i) => (s ? i : -1)).filter(i => i >= 0);
+  let k = 0;
+  return shots.map((s, i) => (s ? i : i < count && taken.length ? taken[k++ % taken.length] : -1));
+}
+/** Shots with empty template slots filled by repeating the taken photos. */
+export function fillShots(d: Pick<Design, 'shots' | 'layout'>) {
+  const m = fillMap(d.shots, getTemplate(d.layout).photos);
+  return d.shots.map((s, i) => s ?? (m[i] >= 0 ? d.shots[m[i]] : null));
+}
+
+/** fill=false keeps empty slots as "+ foto N" placeholders (the capture step's shooting guide). */
+export interface RenderOpts { marks?: Marks; layers?: Layers; cell?: CellSource; fill?: boolean }
 
 /** Draws the template with the user's photos. */
 export function renderStrip(canvas: HTMLCanvasElement, scale: number, d: Design, o: RenderOpts = {}) {
   const t = getTemplate(d.layout), layers = o.layers ?? ALL, f = frameFor(d);
+  const map = o.fill === false ? null : fillMap(d.shots, t.photos);
+  /** the photo index actually shown in slots that ask for photo p */
+  const srcOf = (p: number) => (map && map[p] >= 0 ? map[p] : p);
   canvas.width = Math.round(t.W * scale); canvas.height = Math.round(t.H * scale);
   const ctx = canvas.getContext('2d')!;
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
@@ -94,7 +113,7 @@ export function renderStrip(canvas: HTMLCanvasElement, scale: number, d: Design,
   }
 
   if (layers.photos) t.slots.forEach((s, i) => withSlot(ctx, s, () => {
-    const shot = d.shots[s.photo];
+    const shot = d.shots[srcOf(s.photo)];
     shapePath(ctx, slotShape(t, d, s), -s.w / 2, -s.h / 2, s.w, s.h, i + 1); ctx.clip();
     if (shot) ctx.drawImage(o.cell ? o.cell(s, shot) : renderCell(shot, s.w, s.h, scale, d.filter, d.grain), -s.w / 2, -s.h / 2, s.w, s.h);
     else {
@@ -114,7 +133,7 @@ export function renderStrip(canvas: HTMLCanvasElement, scale: number, d: Design,
   }
 
   if (o.marks && o.marks.selSlot >= 0) t.slots.forEach((s, i) => {
-    if (s.photo !== o.marks!.selSlot) return;
+    if (srcOf(s.photo) !== o.marks!.selSlot) return;
     withSlot(ctx, s, () => { shapePath(ctx, slotShape(t, d, s), -s.w / 2 - 4, -s.h / 2 - 4, s.w + 8, s.h + 8, i + 1); ctx.lineWidth = 6; ctx.strokeStyle = ACCENT; ctx.stroke(); });
   });
 

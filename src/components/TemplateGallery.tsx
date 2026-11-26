@@ -30,7 +30,8 @@ export function TemplateThumb({ id, size = 220 }: { id: string; size?: number })
   useEffect(() => {
     const t = getTemplate(id), ph = getPlaceholders();
     const d: Design = {
-      layout: id, shots: shots.map((x, i) => x ?? ph[i]), filter: t.filter ?? 'natural', grain: 0, frame: 'cream', customBg: '#ff9e7a',
+      // the user's photos (empty slots repeat them, like the real print); stand-ins before the first shot
+      layout: id, shots: shots.some(Boolean) ? shots : ph, filter: t.filter ?? 'natural', grain: 0, frame: 'cream', customBg: '#ff9e7a',
       caption: 'jepret booth', font: 'retro', showDate: true, shape: 'auto', outline: false, stickers: [],
     };
     let alive = true;
@@ -83,7 +84,7 @@ export function LivePreview() {
     const t = getTemplate(design.layout);
     let alive = true;
     void fontsReady.then(() => requestAnimationFrame(() => {
-      if (alive && ref.current) renderStrip(ref.current, 560 / Math.max(t.W, t.H), design, { marks: { selSlot: target, selSticker: -1 } });
+      if (alive && ref.current) renderStrip(ref.current, 560 / Math.max(t.W, t.H), design, { marks: { selSlot: target, selSticker: -1 }, fill: false });
     }));
     return () => { alive = false; };
   }, [design, target]);

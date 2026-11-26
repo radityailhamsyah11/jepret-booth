@@ -1,6 +1,6 @@
 import { applyFilter } from './filters';
 import { text, today } from './paint';
-import { BASE_LAYER, OVERLAY_LAYER, drawCover, renderCell, renderStrip, type Design, type Shot } from './render';
+import { BASE_LAYER, OVERLAY_LAYER, drawCover, fillShots, renderCell, renderStrip, type Design, type Shot } from './render';
 import { shapePath, starPath, roundRect } from './shapes';
 import { frameFor, getTemplate } from './templates';
 import { clamp, fontsReady, mulberry, wait } from './util';
@@ -144,7 +144,8 @@ export async function makeLiveVideo(d: Design, mime: string): Promise<{ blob: Bl
   const overlay = renderStrip(document.createElement('canvas'), scale, d, { layers: OVERLAY_LAYER });
   const photosLayer = document.createElement('canvas');
 
-  const shots = activeShots(d);
+  // repeated slots get their own player for the photo they repeat
+  const shots = fillShots(d).slice(0, t.photos);
   const videos = await Promise.all(shots.map(s => (s?.clip ? loadClip(s.clip.url) : Promise.resolve(null))));
   // one scratch canvas per (photo, size) so twin slots don't fight over pixels
   const scratch = new Map<string, { c: HTMLCanvasElement; x: CanvasRenderingContext2D; frame: number }>();
