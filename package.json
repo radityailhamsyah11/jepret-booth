@@ -1,0 +1,31 @@
+{
+  "name": "jepret-booth",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Photobooth online di browser: kamera/iPhone, 17 template retro, PNG, GIF flipbook, video live strip. Semua diproses di perangkat.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/radityailhamsyah11/jepret-booth.git"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "gifenc": "^1.0.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "~5.9.3",
+    "vite": "^6.4.0"
+  }
+}
