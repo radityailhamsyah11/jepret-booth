@@ -3,11 +3,12 @@ import { looksRear, useCamera, type CamDevice } from '../hooks/useCamera';
 import { startClip } from '../lib/clip';
 import { FILTERS, POSES, type FilterId } from '../lib/config';
 import { drawCover, makeShot } from '../lib/render';
-import { getTemplate, photoAspect, TEMPLATES } from '../lib/templates';
+import { getTemplate, photoAspect } from '../lib/templates';
 import type { Shot } from '../lib/types';
 import { wait } from '../lib/util';
 import { activeShots, allFilled, filledCount, pickFiles, sfx, slotCount, useStore } from '../store';
 import { IconUpload } from './Icons';
+import { LivePreview, TemplateStrip } from './TemplateGallery';
 
 const thumbCache = new WeakMap<HTMLCanvasElement, Map<string, string>>();
 function thumbOf(shot: Shot, aspect: number, width = 240) {
@@ -171,6 +172,7 @@ export function CaptureStep() {
 
   return (
     <div className="view active">
+      <TemplateStrip />
       <div className="capture">
         <div>
           <div
@@ -246,14 +248,8 @@ export function CaptureStep() {
         </div>
 
         <aside className="rail">
-          <label className="tpl-pick">
-            <span className="eyebrow">Template</span>
-            <select value={tpl.id} onChange={e => s.setLayout(e.target.value)}>
-              <optgroup label="Retro">{TEMPLATES.filter(t => t.group === 'retro').map(t => <option key={t.id} value={t.id}>{t.name} · {t.photos} foto</option>)}</optgroup>
-              <optgroup label="Klasik">{TEMPLATES.filter(t => t.group === 'klasik').map(t => <option key={t.id} value={t.id}>{t.name} · {t.photos} foto</option>)}</optgroup>
-            </select>
-          </label>
-          <h4>Foto kamu <span>{filled}/{n}</span></h4>
+          <LivePreview />
+          <h4>Foto kamu <span>{filled}/{n} · {tpl.name}</span></h4>
           <div className={'slots' + (n === 1 ? ' one' : '')}>
             {shots.map((shot, i) => {
               const aspect = photoAspect(tpl, i);

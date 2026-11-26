@@ -2,10 +2,10 @@ import { useEffect, useRef } from 'react';
 import { EMOJI, FILTERS, FONT_LABELS, FONTS, FRAMES, LABEL_COLORS, LABELS, SHAPES, type FilterId, type FontId, type ShapeId } from '../lib/config';
 import { applyFilter } from '../lib/filters';
 import { drawFrameBg, frameOf } from '../lib/paint';
-import { drawCover, makeShot, renderStrip } from '../lib/render';
+import { drawCover } from '../lib/render';
 import { shapePath } from '../lib/shapes';
 import { getTemplate, TEMPLATES } from '../lib/templates';
-import type { Design, Shot } from '../lib/types';
+import { TemplateCard } from './TemplateGallery';
 import { activeShots, pickFiles, useStore } from '../store';
 
 export function SlotEditor() {
@@ -34,48 +34,10 @@ export function SlotEditor() {
   );
 }
 
-/** Stand-in photos for template previews before the user has shot anything. */
-let placeholders: Shot[] | null = null;
-function getPlaceholders() {
-  if (placeholders) return placeholders;
-  const hues = [[18, 32], [200, 220], [42, 12], [150, 170]];
-  placeholders = hues.map(([a, b]) => {
-    const c = document.createElement('canvas'); c.width = 480; c.height = 360; const x = c.getContext('2d')!;
-    const g = x.createLinearGradient(0, 0, 480, 360); g.addColorStop(0, `hsl(${a},55%,72%)`); g.addColorStop(1, `hsl(${b},45%,48%)`);
-    x.fillStyle = g; x.fillRect(0, 0, 480, 360);
-    x.fillStyle = 'rgba(30,20,15,.55)';
-    x.beginPath(); x.arc(240, 150, 62, 0, Math.PI * 2); x.fill();
-    x.beginPath(); x.ellipse(240, 360, 130, 120, 0, Math.PI, 0); x.fill();
-    return makeShot(c);
-  });
-  return placeholders;
-}
-
-function TemplateThumb({ id }: { id: string }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const shots = useStore(s => s.shots);
-  useEffect(() => {
-    const t = getTemplate(id), ph = getPlaceholders();
-    const d: Design = {
-      layout: id, shots: shots.map((x, i) => x ?? ph[i]), filter: t.filter ?? 'natural', grain: 0, frame: 'cream', customBg: '#ff9e7a',
-      caption: 'jepret booth', font: 'retro', showDate: true, shape: 'auto', outline: false, stickers: [],
-    };
-    const id2 = requestAnimationFrame(() => { if (ref.current) renderStrip(ref.current, 220 / Math.max(t.W, t.H), d); });
-    return () => cancelAnimationFrame(id2);
-  }, [id, shots]);
-  return <canvas ref={ref} />;
-}
-
 export function TemplatePanel() {
-  const layout = useStore(s => s.layout), shape = useStore(s => s.shape), outline = useStore(s => s.outline);
-  const { setLayout, patch } = useStore.getState();
-  const group = (g: 'retro' | 'klasik') => TEMPLATES.filter(t => t.group === g).map(t => (
-    <button key={t.id} className="tpl" aria-pressed={layout === t.id} onClick={() => setLayout(t.id)} title={t.desc}>
-      <span className="tpl-art"><TemplateThumb id={t.id} /></span>
-      <strong>{t.name}</strong>
-      <small>{t.photos} foto · {t.desc}</small>
-    </button>
-  ));
+  const shape = useStore(s => s.shape), outline = useStore(s => s.outline);
+  const { patch } = useStore.getState();
+  const group = (g: 'retro' | 'klasik') => TEMPLATES.filter(t => t.group === g).map(t => <TemplateCard key={t.id} t={t} />);
   return (
     <>
       <div className="field"><div className="lab">Retro <span>{TEMPLATES.filter(t => t.group === 'retro').length} template</span></div><div className="tpls">{group('retro')}</div></div>

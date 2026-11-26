@@ -8,8 +8,6 @@ import { IconCamera, IconUpload } from './Icons';
 
 export const scrollToBooth = () => document.getElementById('booth')?.scrollIntoView({ behavior: 'smooth' });
 
-const FEATURED = ['kartu', 'film35', 'birthday', 'memory', 'ticket', 'zine'];
-
 /** Demo "photos" for the hero fan: soft colour fields with a sitter silhouette. */
 let demo: Shot[] | null = null;
 function demoShots() {
@@ -40,9 +38,6 @@ function Card({ id, style }: { id: string; style: React.CSSProperties }) {
 }
 
 export function Hero() {
-  const layout = useStore(s => s.layout);
-  const setLayout = useStore(s => s.setLayout);
-
   const startCamera = () => { useStore.getState().patch({ step: 1, autoStartCam: true }); scrollToBooth(); };
   const upload = async () => {
     const st = useStore.getState();
@@ -65,12 +60,6 @@ export function Hero() {
         <div className="ctas">
           <button className="btn primary big" onClick={startCamera}><IconCamera />Masuk booth</button>
           <button className="btn big" onClick={upload}><IconUpload />Upload foto</button>
-        </div>
-        <div className="fmt">
-          <span className="eyebrow"><b>[02]</b> template</span>
-          {FEATURED.map(id => (
-            <button key={id} className="chip" aria-pressed={layout === id} onClick={() => setLayout(id)}>{getTemplate(id).name}</button>
-          ))}
         </div>
       </div>
       <div className="fan" aria-hidden="true">
