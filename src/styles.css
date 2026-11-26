@@ -249,7 +249,11 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .slotedit .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .slotedit .head strong{font-size:14.5px}
 .slotedit .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
-.nextbar{display:flex;justify-content:space-between;gap:10px;margin-top:16px;flex-wrap:wrap}
+.nextbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+.step-dots{display:flex;gap:6px}
+.step-dots i{width:7px;height:7px;border-radius:50%;background:var(--line-2)}
+.step-dots i.done{background:var(--ink)}
+.step-dots i.on{background:var(--accent);width:20px;border-radius:4px}
 
 /* save */
 .save{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start}

@@ -14,6 +14,8 @@ const TABS = [
   { id: 'sticker', label: 'Stiker' },
 ] as const;
 export type TabId = (typeof TABS)[number]['id'];
+/** Frame colour and caption only drive the classic templates; retro ones bring their own. */
+const CLASSIC_ONLY: TabId[] = ['frame', 'text'];
 
 type Drag =
   | { kind: 'stk'; p0: { x: number; y: number }; x0: number; y0: number; i: number }
@@ -26,6 +28,11 @@ export function DesignStep() {
   const design = useStore(useShallow(designOf));
   const selSlot = useStore(s => s.selSlot), selSticker = useStore(s => s.selSticker);
   const [tab, setTab] = useState<TabId>('layout');
+  const classic = useStore(s => !!getTemplate(s.layout).usesFrame);
+  const tabs = TABS.filter(t => classic || !CLASSIC_ONLY.includes(t.id));
+  const tabIdx = Math.max(0, tabs.findIndex(t => t.id === tab));
+  // switching to a retro template while on Frame/Teks: fall back to the Template tab
+  useEffect(() => { if (!tabs.some(t => t.id === tab)) setTab('layout'); }, [classic]); // eslint-disable-line react-hooks/exhaustive-deps
   const [fontsOk, setFontsOk] = useState(false);
   const drag = useRef<Drag | null>(null);
 
@@ -141,7 +148,7 @@ export function DesignStep() {
           <div className="panel">
             <SlotEditor />
             <div className="tabs" role="tablist">
-              {TABS.map(t => <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}>{t.label}</button>)}
+              {tabs.map(t => <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}>{t.label}</button>)}
             </div>
             <div className="tabpanel active" role="tabpanel">
               {tab === 'layout' && <TemplatePanel />}
@@ -152,8 +159,13 @@ export function DesignStep() {
             </div>
           </div>
           <div className="nextbar">
-            <button className="btn" onClick={() => goStep(1)}>← Foto lagi</button>
-            <button className="btn primary" onClick={() => goStep(3)}>Lanjut simpan →</button>
+            {tabIdx === 0
+              ? <button className="btn" onClick={() => goStep(1)}>← Foto lagi</button>
+              : <button className="btn" onClick={() => setTab(tabs[tabIdx - 1].id)}>← {tabs[tabIdx - 1].label}</button>}
+            <span className="step-dots" aria-hidden="true">{tabs.map((t, i) => <i key={t.id} className={i === tabIdx ? 'on' : i < tabIdx ? 'done' : ''} />)}</span>
+            {tabIdx < tabs.length - 1
+              ? <button className="btn primary" onClick={() => setTab(tabs[tabIdx + 1].id)}>Lanjut: {tabs[tabIdx + 1].label} →</button>
+              : <button className="btn primary" onClick={() => goStep(3)}>Lanjut simpan →</button>}
           </div>
         </div>
       </div>
