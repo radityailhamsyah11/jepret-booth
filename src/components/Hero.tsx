@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { makeShot, renderStrip } from '../lib/render';
-import { getTemplate } from '../lib/templates';
+import { getTemplate, TEMPLATES } from '../lib/templates';
 import type { Design, Shot } from '../lib/types';
 import { fontsReady } from '../lib/util';
 import { allFilled, pickFiles, useStore } from '../store';
@@ -32,7 +32,7 @@ function Card({ id, style }: { id: string; style: React.CSSProperties }) {
   useEffect(() => {
     const t = getTemplate(id);
     const d: Design = { layout: id, shots: demoShots(), filter: t.filter ?? 'natural', grain: 0, frame: 'cream', customBg: '#fff', caption: 'jepret booth', font: 'retro', showDate: true, shape: 'auto', outline: false, stickers: [] };
-    void fontsReady.then(() => ref.current && renderStrip(ref.current, 420 / Math.max(t.W, t.H), d));
+    void fontsReady().then(() => ref.current && renderStrip(ref.current, 420 / Math.max(t.W, t.H), d));
   }, [id]);
   return <canvas ref={ref} className="fan-card" style={style} aria-hidden="true" />;
 }
@@ -66,7 +66,7 @@ export function Hero() {
         <Card id="birthday" style={{ ['--r' as string]: '-12deg', ['--x' as string]: '-48%', zIndex: 1 }} />
         <Card id="film35" style={{ ['--r' as string]: '9deg', ['--x' as string]: '46%', zIndex: 2 }} />
         <Card id="kartu" style={{ ['--r' as string]: '-2deg', ['--x' as string]: '0%', zIndex: 3 }} />
-        <span className="stamp-badge">17<small>template</small></span>
+        <span className="stamp-badge">{TEMPLATES.length}<small>template</small></span>
       </div>
     </section>
   );

@@ -174,7 +174,9 @@ header.top .wrap{display:flex;align-items:center;justify-content:space-between;h
 
 /* template gallery + live print preview (capture step) */
 .tpl-strip-wrap{margin:-2px 0 16px;border-bottom:1px dashed var(--line-2);padding-bottom:6px}
-.tpl-strip-head{display:flex;justify-content:space-between;margin-bottom:10px}
+.tpl-strip-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.cats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.cats .chip{flex:none;padding:5px 11px;font-size:12.5px}
 .tpl-strip{display:flex;gap:10px;overflow-x:auto;padding:2px 4px 10px 2px;scroll-snap-type:x proximity;scrollbar-width:thin}
 .tpl-strip .tpl{flex:none;width:124px;scroll-snap-align:start}
 .tpl-strip .tpl-art{height:104px}

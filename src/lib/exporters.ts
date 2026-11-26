@@ -6,7 +6,7 @@ import { frameFor, getTemplate } from './templates';
 import { clamp, fontsReady, mulberry, wait } from './util';
 
 export async function makePng(d: Design): Promise<Blob> {
-  await fontsReady;
+  await fontsReady();
   const t = getTemplate(d.layout);
   // ~2400px on the long side
   const c = renderStrip(document.createElement('canvas'), Math.min(2.4, 2400 / Math.max(t.W, t.H) * 1.2), d);
@@ -39,7 +39,7 @@ export async function makeGif(d: Design): Promise<Blob> {
   const { GIFEncoder, quantize, applyPalette } = await import('gifenc');
   const shots = activeShots(d).filter((s): s is Shot => s !== null);
   if (!shots.length) throw new Error('no photos');
-  await fontsReady;
+  await fontsReady();
   const t = getTemplate(d.layout), theme = t.usesFrame ? { bg: frameFor(d).bg ?? frameFor(d).grad?.[0] ?? '#f3ead8', ink: frameFor(d).ink, accent: frameFor(d).ink } : t.theme;
   const W = 600, H = 400, px = 72, py = 22, pw = W - px * 2, ph = H - py - 46;
   const c = document.createElement('canvas'); c.width = W; c.height = H;
@@ -97,7 +97,7 @@ function recorder(c: HTMLCanvasElement, mime: string, bps: number) {
 
 /** 5s, 9:16 clip of the strip sliding out of a booth slot. */
 export async function makeVideo(d: Design, mime: string): Promise<{ blob: Blob; ext: string }> {
-  await fontsReady;
+  await fontsReady();
   const strip = renderStrip(document.createElement('canvas'), 1, d);
   const W = 720, H = 1280, c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d')!;
@@ -134,7 +134,7 @@ export async function makeVideo(d: Design, mime: string): Promise<{ blob: Blob; 
  * slot(s), all at once. Each slot ends on its exact captured photo and the still holds a moment.
  */
 export async function makeLiveVideo(d: Design, mime: string): Promise<{ blob: Blob; ext: string }> {
-  await fontsReady;
+  await fontsReady();
   const t = getTemplate(d.layout);
   const scale = Math.min(1.6, 1920 / Math.max(t.W, t.H));
   const even = (v: number) => Math.round(v / 2) * 2;

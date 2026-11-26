@@ -14,8 +14,7 @@ const TABS = [
   { id: 'sticker', label: 'Stiker' },
 ] as const;
 export type TabId = (typeof TABS)[number]['id'];
-/** Frame colour and caption only drive the classic templates; retro ones bring their own. */
-const CLASSIC_ONLY: TabId[] = ['frame', 'text'];
+
 
 type Drag =
   | { kind: 'stk'; p0: { x: number; y: number }; x0: number; y0: number; i: number }
@@ -28,15 +27,17 @@ export function DesignStep() {
   const design = useStore(useShallow(designOf));
   const selSlot = useStore(s => s.selSlot), selSticker = useStore(s => s.selSticker);
   const [tab, setTab] = useState<TabId>('layout');
+  // Frame colour drives only the classic templates; the caption also drives templates that print a name/line
   const classic = useStore(s => !!getTemplate(s.layout).usesFrame);
-  const tabs = TABS.filter(t => classic || !CLASSIC_ONLY.includes(t.id));
+  const captioned = useStore(s => !!getTemplate(s.layout).usesCaption);
+  const tabs = TABS.filter(t => (t.id === 'frame' ? classic : t.id === 'text' ? classic || captioned : true));
   const tabIdx = Math.max(0, tabs.findIndex(t => t.id === tab));
   // switching to a retro template while on Frame/Teks: fall back to the Template tab
-  useEffect(() => { if (!tabs.some(t => t.id === tab)) setTab('layout'); }, [classic]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!tabs.some(t => t.id === tab)) setTab('layout'); }, [classic, captioned]); // eslint-disable-line react-hooks/exhaustive-deps
   const [fontsOk, setFontsOk] = useState(false);
   const drag = useRef<Drag | null>(null);
 
-  useEffect(() => { void fontsReady.then(() => setFontsOk(true)); }, []);
+  useEffect(() => { void fontsReady().then(() => setFontsOk(true)); }, []);
 
   // redraw on the next frame whenever the design or selection changes
   useEffect(() => {

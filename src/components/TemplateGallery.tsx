@@ -1,7 +1,7 @@
-import { useEffect, useRef, type MouseEvent } from 'react';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { makeShot, renderStrip } from '../lib/render';
-import { getTemplate, hitSlot, TEMPLATES, type Template } from '../lib/templates';
+import { getTemplate, GROUPS, hitSlot, TEMPLATES, type Template } from '../lib/templates';
 import type { Design, Shot } from '../lib/types';
 import { fontsReady } from '../lib/util';
 import { designOf, useStore } from '../store';
@@ -35,7 +35,7 @@ export function TemplateThumb({ id, size = 220 }: { id: string; size?: number })
       caption: 'jepret booth', font: 'retro', showDate: true, shape: 'auto', outline: false, stickers: [],
     };
     let alive = true;
-    void fontsReady.then(() => requestAnimationFrame(() => { if (alive && ref.current) renderStrip(ref.current, size / Math.max(t.W, t.H), d); }));
+    void fontsReady().then(() => requestAnimationFrame(() => { if (alive && ref.current) renderStrip(ref.current, size / Math.max(t.W, t.H), d); }));
     return () => { alive = false; };
   }, [id, shots, size]);
   return <canvas ref={ref} />;
@@ -56,20 +56,26 @@ export function TemplateCard({ t }: { t: Template }) {
 export function TemplateStrip() {
   const layout = useStore(s => s.layout);
   const ref = useRef<HTMLDivElement>(null);
+  const [cat, setCat] = useState<string>('all');
+  const groups = GROUPS.filter(g => TEMPLATES.some(t => t.group === g.id));
+  const list = cat === 'all' ? TEMPLATES : TEMPLATES.filter(t => t.group === cat);
   // keep the chosen template in view when it changes from elsewhere
   useEffect(() => {
     // scroll only the strip (scrollIntoView would also scroll the page on load)
     const box = ref.current, el = box?.querySelector<HTMLElement>('[aria-pressed="true"]');
     if (box && el) box.scrollTo({ left: el.offsetLeft - box.offsetLeft - 8, behavior: 'smooth' });
-  }, [layout]);
+  }, [layout, cat]);
   return (
     <div className="tpl-strip-wrap">
       <div className="tpl-strip-head">
-        <span className="eyebrow"><b>[02]</b> pilih template · {TEMPLATES.length}</span>
-        <span className="eyebrow">geser →</span>
+        <span className="eyebrow"><b>[02]</b> pilih template · {list.length}</span>
+        <div className="cats" role="tablist" aria-label="Kategori template">
+          <button className="chip" aria-pressed={cat === 'all'} onClick={() => setCat('all')}>Semua</button>
+          {groups.map(g => <button key={g.id} className="chip" aria-pressed={cat === g.id} onClick={() => setCat(g.id)}>{g.name}</button>)}
+        </div>
       </div>
       <div className="tpl-strip" ref={ref}>
-        {TEMPLATES.map(t => <TemplateCard key={t.id} t={t} />)}
+        {list.map(t => <TemplateCard key={t.id} t={t} />)}
       </div>
     </div>
   );
@@ -83,7 +89,7 @@ export function LivePreview() {
   useEffect(() => {
     const t = getTemplate(design.layout);
     let alive = true;
-    void fontsReady.then(() => requestAnimationFrame(() => {
+    void fontsReady().then(() => requestAnimationFrame(() => {
       if (alive && ref.current) renderStrip(ref.current, 560 / Math.max(t.W, t.H), design, { marks: { selSlot: target, selSticker: -1 }, fill: false });
     }));
     return () => { alive = false; };

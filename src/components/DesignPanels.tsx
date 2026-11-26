@@ -4,7 +4,7 @@ import { applyFilter } from '../lib/filters';
 import { drawFrameBg, frameOf } from '../lib/paint';
 import { drawCover } from '../lib/render';
 import { shapePath } from '../lib/shapes';
-import { getTemplate, TEMPLATES } from '../lib/templates';
+import { getTemplate, GROUPS, TEMPLATES } from '../lib/templates';
 import { TemplateCard } from './TemplateGallery';
 import { activeShots, pickFiles, useStore } from '../store';
 
@@ -37,11 +37,15 @@ export function SlotEditor() {
 export function TemplatePanel() {
   const shape = useStore(s => s.shape), outline = useStore(s => s.outline);
   const { patch } = useStore.getState();
-  const group = (g: 'retro' | 'klasik') => TEMPLATES.filter(t => t.group === g).map(t => <TemplateCard key={t.id} t={t} />);
+
   return (
     <>
-      <div className="field"><div className="lab">Retro <span>{TEMPLATES.filter(t => t.group === 'retro').length} template</span></div><div className="tpls">{group('retro')}</div></div>
-      <div className="field"><div className="lab">Klasik <span>warna &amp; motif bebas</span></div><div className="tpls">{group('klasik')}</div></div>
+      {GROUPS.map(g => {
+        const list = TEMPLATES.filter(t => t.group === g.id);
+        return list.length ? (
+          <div className="field" key={g.id}><div className="lab">{g.name} <span>{list.length} · {g.desc}</span></div><div className="tpls">{list.map(t => <TemplateCard key={t.id} t={t} />)}</div></div>
+        ) : null;
+      })}
       <div className="field">
         <div className="lab">Bentuk foto <span>{shape === 'auto' ? 'ikut template' : SHAPES[shape]}</span></div>
         <div className="shapes">
@@ -130,19 +134,22 @@ export function FramePanel() {
 
 export function TextPanel() {
   const caption = useStore(s => s.caption), font = useStore(s => s.font), showDate = useStore(s => s.showDate);
+  const usesFont = useStore(s => !!getTemplate(s.layout).usesFont);
   const { patch } = useStore.getState();
   return (
     <>
       <div className="field">
-        <label htmlFor="caption">Teks bawah</label>
-        <input id="caption" className="text-in" maxLength={28} value={caption} autoComplete="off" onChange={e => patch({ caption: e.target.value })} />
+        <label htmlFor="caption">{usesFont ? 'Teks bawah' : 'Nama / caption'}</label>
+        <input id="caption" className="text-in" maxLength={28} value={caption} autoComplete="off" placeholder={usesFont ? '' : 'Contoh: Raditya · QA'} onChange={e => patch({ caption: e.target.value })} />
       </div>
-      <div className="field">
-        <div className="lab">Font <span>buat template klasik</span></div>
-        <div className="seg">
-          {(Object.keys(FONTS) as FontId[]).map(k => <button key={k} aria-pressed={font === k} onClick={() => patch({ font: k })}>{FONT_LABELS[k]}</button>)}
+      {usesFont && (
+        <div className="field">
+          <div className="lab">Font</div>
+          <div className="seg">
+            {(Object.keys(FONTS) as FontId[]).map(k => <button key={k} aria-pressed={font === k} onClick={() => patch({ font: k })}>{FONT_LABELS[k]}</button>)}
+          </div>
         </div>
-      </div>
+      )}
       <div className="field">
         <label className="toggle">Tampilkan tanggal <input type="checkbox" checked={showDate} onChange={e => patch({ showDate: e.target.checked })} /></label>
       </div>

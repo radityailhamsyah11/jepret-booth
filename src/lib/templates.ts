@@ -4,7 +4,8 @@
  * Slots reference a photo index, so one photo can appear in several slots (twin strips, sheets).
  */
 import { EMOJI_FONT, FONTS, LAYOUTS, type ClassicId, type FilterId, type Frame, type ShapeId } from './config';
-import { drawFrameBg, frameOf, sparkle, speckle, text, today, vignette } from './paint';
+import { drawFrameBg, frameOf, sparkle, speckle, text, today, vignette, withSlot } from './paint';
+export { withSlot };
 import { heartPath, roundRect, shapePath, starPath } from './shapes';
 import type { Design } from './types';
 import { mulberry } from './util';
@@ -24,7 +25,9 @@ export interface Slot {
 }
 export interface TplCtx { ctx: CanvasRenderingContext2D; W: number; H: number; d: Design; f: Frame }
 export interface Template {
-  id: string; name: string; desc: string; group: 'retro' | 'klasik';
+  id: string; name: string; desc: string;
+  /** category id (see GROUPS) */
+  group: string;
   W: number; H: number;
   /** distinct photos to capture */
   photos: number;
@@ -35,19 +38,14 @@ export interface Template {
   usesFrame?: boolean;
   /** caption font picker applies */
   usesFont?: boolean;
+  /** caption (name / event line) is drawn, so the Teks tab stays even without usesFrame */
+  usesCaption?: boolean;
   /** filter applied when the template is picked */
   filter?: FilterId;
   /** colours for the GIF frame and the picker */
   theme: { bg: string; ink: string; accent: string };
   bg: (t: TplCtx) => void;
   decor?: (t: TplCtx) => void;
-}
-
-/** Runs fn in the slot's local space: origin at its centre, rotated. */
-export function withSlot(ctx: CanvasRenderingContext2D, s: Slot, fn: () => void) {
-  ctx.save(); ctx.translate(s.x + s.w / 2, s.y + s.h / 2);
-  if (s.rot) ctx.rotate((s.rot * Math.PI) / 180);
-  fn(); ctx.restore();
 }
 
 /** Topmost slot under a point (template units), honouring rotation. */
@@ -412,8 +410,24 @@ const neonstar: Template = (() => {
   };
 })();
 
+export interface Group { id: string; name: string; desc: string }
+
+/**
+ * Optional brand packs in src/brands/*.ts (gitignored: third-party logos stay local).
+ * Each exports `group` and `templates`; the app works the same when the folder is absent.
+ */
+const brandPacks = Object.values(import.meta.glob<{ group: Group; templates: Template[] }>(['../brands/*.ts', '!../brands/_*.ts'], { eager: true }))
+  .sort((a, b) => a.group.name.localeCompare(b.group.name));
+
+export const GROUPS: Group[] = [
+  { id: 'retro', name: 'Retro', desc: 'kertas, film, tiket, koran' },
+  ...brandPacks.map(p => p.group),
+  { id: 'klasik', name: 'Klasik', desc: 'warna & motif bebas' },
+];
+
 export const TEMPLATES: Template[] = [
   kartu, memory, ticket, zine, birthday, redroom, pasfoto, vintage, koran, prangko, film35, neonstar,
+  ...brandPacks.flatMap(p => p.templates),
   classic('strip4'), classic('strip3'), classic('strip2'), classic('grid4'), classic('polaroid'),
 ];
 const BY_ID = new Map(TEMPLATES.map(t => [t.id, t]));

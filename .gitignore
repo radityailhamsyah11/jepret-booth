@@ -5,3 +5,6 @@ dist
 # local test screenshots and the pre-React prototype
 screenshots/
 legacy/
+
+# brand frame packs (third-party trademarks) stay local
+src/brands/

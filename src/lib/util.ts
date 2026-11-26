@@ -27,12 +27,18 @@ const pad2 = (n: number) => String(n).padStart(2, '0');
 export const fileStamp = () => { const d = new Date(); return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}`; };
 export const dateText = () => { const d = new Date(); return `${pad2(d.getDate())} · ${pad2(d.getMonth() + 1)} · ${d.getFullYear()}`; };
 
-/** Resolves once the canvas fonts are loaded (or after 2.5s, so a slow font CDN never blocks rendering). */
-export const fontsReady: Promise<unknown> = Promise.race([
+/** Canvas fonts (capped at 4s so a slow font CDN never blocks rendering). */
+const fontsLoaded: Promise<unknown> = Promise.race([
   Promise.all(['italic 600 40px Fraunces', 'italic 500 40px Fraunces', '700 40px Caveat', '500 20px "DM Mono"', '700 30px "Space Grotesk"', '800 40px "Bricolage Grotesque"',
-    '40px Shrikhand', '40px Bungee', '40px "Abril Fatface"', '40px "Great Vibes"', '40px "Special Elite"', '40px "Bagel Fat One"', '40px UnifrakturMaguntia'].map(f => document.fonts.load(f))).catch(() => {}),
+    '40px Shrikhand', '40px Bungee', '40px "Abril Fatface"', '40px "Great Vibes"', '40px "Special Elite"', '40px "Bagel Fat One"', '40px UnifrakturMaguntia', '900 40px Nunito', '800 40px Nunito'].map(f => document.fonts.load(f))).catch(() => {}),
   wait(4000),
 ]);
+
+const assets: Promise<unknown>[] = [];
+/** Images a template draws (brand logos): renders wait for them like they wait for fonts. */
+export const registerAsset = (p: Promise<unknown>) => { assets.push(p.catch(() => {})); };
+/** Resolves once fonts and every registered template asset are ready to draw. */
+export const fontsReady = () => Promise.all([fontsLoaded, ...assets]);
 
 export async function fileToCanvas(file: File): Promise<HTMLCanvasElement> {
   const url = URL.createObjectURL(file);

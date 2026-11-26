@@ -1,6 +1,7 @@
 /** Small drawing helpers shared by templates, the renderer and exporters. */
 import { FRAMES, type Frame, type FrameId } from './config';
 import { heartPath, roundRect, starPath } from './shapes';
+import type { Slot } from './templates';
 import { dateText, mulberry } from './util';
 
 export function frameOf(frame: FrameId, customBg: string): Frame {
@@ -80,3 +81,11 @@ export function sparkle(ctx: CanvasRenderingContext2D, x: number, y: number, r: 
 }
 
 export const today = dateText;
+
+/** Runs fn in the slot's local space: origin at its centre, rotated. */
+export function withSlot(ctx: CanvasRenderingContext2D, s: Slot, fn: () => void) {
+  ctx.save(); ctx.translate(s.x + s.w / 2, s.y + s.h / 2);
+  if (s.rot) ctx.rotate((s.rot * Math.PI) / 180);
+  fn(); ctx.restore();
+}
+

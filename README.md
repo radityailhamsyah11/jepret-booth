@@ -50,6 +50,17 @@ src/
 
 Nambah template: tambah satu objek `Template` di `src/lib/templates.ts` (ukuran, slot, `bg`, `decor`) lalu masukin ke array `TEMPLATES`.
 
+## Paket template lokal (opsional)
+
+Taruh file `src/brands/<nama>.ts` buat template khusus (misalnya frame acara kantor atau brand sendiri). Folder ini di-`.gitignore`, jadi logo dan aset pihak ketiga nggak ikut ke repo. Aplikasi tetap jalan normal kalau folder ini nggak ada. Tiap file meng-export:
+
+```ts
+export const group = { id: 'acara', name: 'Acara Kantor', desc: 'frame internal' };
+export const templates: Template[] = [/* objek Template, sama kayak di src/lib/templates.ts */];
+```
+
+File berawalan `_` (misalnya `_kit.ts`) dianggap helper dan nggak dimuat sebagai paket. Gambar (logo) di-load lewat `registerAsset`, jadi preview dan export nunggu sampai gambarnya siap.
+
 ## Kontribusi
 
 PR dan issue welcome, terutama template baru, filter, dan perbaikan buat browser HP.
