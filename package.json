@@ -2,7 +2,7 @@
   "name": "jepret-booth",
   "private": true,
   "version": "1.0.0",
-  "description": "Photobooth online di browser: kamera/iPhone, 17 template retro, PNG, GIF flipbook, video live strip. Semua diproses di perangkat.",
+  "description": "Retro photobooth in the browser: webcam or iPhone camera, 17 templates, PNG, flipbook GIF and live-strip video. Runs entirely on your device.",
   "license": "MIT",
   "repository": {
     "type": "git",
