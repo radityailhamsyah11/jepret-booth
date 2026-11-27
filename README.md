@@ -52,7 +52,7 @@ Nambah template: tambah satu objek `Template` di `src/lib/templates.ts` (ukuran,
 
 ## Paket template lokal (opsional)
 
-Taruh file `src/brands/<nama>.ts` buat template khusus (misalnya frame acara kantor atau brand sendiri). Folder ini di-`.gitignore`, jadi logo dan aset pihak ketiga nggak ikut ke repo. Aplikasi tetap jalan normal kalau folder ini nggak ada. Tiap file meng-export:
+Taruh file `src/brands/<nama>.ts` buat template khusus (misalnya frame acara kantor atau brand sendiri). Repo ini udah berisi paket **ruparupa** dan **ruparupa Team**. Paket yang nggak boleh publik bisa ditambahin ke `.gitignore` (contohnya `src/brands/azko.ts`); aplikasi tetap jalan normal tanpa file itu. Tiap file meng-export:
 
 ```ts
 export const group = { id: 'acara', name: 'Acara Kantor', desc: 'frame internal' };

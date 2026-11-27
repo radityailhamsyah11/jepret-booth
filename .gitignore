@@ -6,5 +6,6 @@ dist
 screenshots/
 legacy/
 
-# brand frame packs (third-party trademarks) stay local
-src/brands/
+# AZKO pack stays local (third-party trademark); ruparupa packs are published
+src/brands/azko.ts
+src/brands/assets/azko-*
