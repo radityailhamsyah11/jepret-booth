@@ -462,3 +462,22 @@ header.top.booth-bar .wrap{max-width:none;padding:0 18px;height:60px;display:gri
   .guide ol{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;font-size:12.5px}
   .guide li{align-items:flex-start}
 }
+
+/* desktop booth: filters stretch across the row; settings never push the shutter onto a new line */
+@media (min-width: 861px){
+  .cap-main .filters-row .chip{flex:1 0 auto}
+  .cap-main .controls{flex-wrap:nowrap;gap:14px}
+  .cap-main .controls .group{flex:1 1 auto;min-width:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:2px 4px 4px 1px}
+  .cap-main .controls .group::-webkit-scrollbar{display:none}
+  .cap-main .controls .group>*{flex:none}
+  .cap-main .shutter-wrap{flex:none}
+  .cap-main .controls .group{gap:5px}
+  .cap-main .controls .seg button{padding:6px 9px}
+  .cap-main .controls .btn.sm{padding:7px 11px}
+  .cam-select{max-width:170px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+}
+/* when the settings don't fit, fade the edge so it reads as scrollable */
+@media (min-width: 861px) and (max-width: 1360px){
+  .cap-main .controls .group{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);padding-right:24px}
+}
+@media (min-width: 1500px){ .cam-select{max-width:280px} }
