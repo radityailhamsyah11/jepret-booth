@@ -10,7 +10,7 @@ import { nunito } from './_kit';
 import { BL, BL_D, BL_L, CREAM, GOLD, INK, L_MARK_WHITE, L_MARK_WHITE_BLUE, L_NEW_WHITE, OR, OR_L, drawLogo } from './_rr';
 
 // access code hash — regenerate with `npm run hash-code -- <CODE>`
-export const group: Group = { id: 'ruparupa', name: 'ruparupa', desc: 'oranye-biru + logo baru', lock: { codes: [{ h: '58a2035a2932b235efb267b727bc375b523d19effbf021bb9689c9b93886bd4c' }] } };
+export const group: Group = { id: 'ruparupa', name: 'ruparupa', desc: 'oranye-biru + logo baru', lock: { codes: [{ h: 'b46368ab3ce7963d3f0fc36397b760e7d4bc6aec64e6301f19cf69b8093aba19' }] } };
 
 const n9 = nunito(900), n8 = nunito(800), n6 = nunito(600), mono = (px: number) => `500 ${px}px "DM Mono", monospace`;
 
