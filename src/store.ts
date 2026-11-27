@@ -67,7 +67,7 @@ export const useStore = create<State & Actions>()((set, get) => ({
   filter: getTemplate(DEFAULT_TEMPLATE).filter ?? 'natural', grain: 0, frame: 'cream' as FrameId, customBg: '#ff9e7a',
   caption: 'jepret booth', font: 'retro' as FontId, showDate: true, shape: 'auto', outline: false,
   stickers: [], selSlot: -1, selSticker: -1,
-  sound: storage.get('jb-sound') !== '0', mirror: true, grid: false, timer: 3, facing: 'user', deviceId: null, shootMode: 'burst',
+  sound: storage.get('jb-sound') !== '0', mirror: true, grid: false, timer: 3, facing: 'user', deviceId: storage.get('jb-cam') || null, shootMode: 'burst',
   step: 1, autoStartCam: false, view: 'landing', unlocked: loadUnlocked(), unlockFor: null, toast: null, busy: null,
 
   patch: p => set(p),

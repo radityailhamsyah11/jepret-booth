@@ -5,7 +5,7 @@ import { FILTERS, POSES, type FilterId } from '../lib/config';
 import { drawCover, makeShot } from '../lib/render';
 import { getTemplate, photoAspect } from '../lib/templates';
 import type { Shot } from '../lib/types';
-import { wait } from '../lib/util';
+import { storage, wait } from '../lib/util';
 import { activeShots, allFilled, filledCount, pickFiles, sfx, slotCount, useStore } from '../store';
 import { IconUpload } from './Icons';
 import { LivePreview, TemplatePicker } from './TemplateGallery';
@@ -35,7 +35,21 @@ export function CaptureStep() {
   // camera errors are shown on the stage itself (a toast disappears before people read it)
   const [camError, setCamError] = useState<string | null>(null);
   const onCamError = useCallback((msg: string) => setCamError(msg), []);
-  const cam = useCamera(videoRef, onCamError);
+  const cam = useCamera(videoRef, onCamError, {
+    // plugging a camera in is a clear intent: switch to it (unless a countdown is running)
+    onNewDevice: d => {
+      if (busyRef.current) { showToast(`Kamera baru: ${camName(d.label)}. Pilih di menu kamera.`); return; }
+      showToast(`Kamera baru terdeteksi: ${camName(d.label)} 📷`);
+      if (camLiveRef.current) void openRef.current?.(d.id); else useStore.getState().patch({ deviceId: d.id });
+    },
+    onLost: d => {
+      abortRef.current = true;
+      setCamError(`${d ? camName(d.label) : 'Kamera'} terputus. Colok lagi, atau nyalain kamera lain.`);
+      showToast('Kamera terputus');
+    },
+  });
+  const camLiveRef = useRef(false); camLiveRef.current = cam.live;
+  const openRef = useRef<((id: string | null) => Promise<void>) | null>(null);
   const n = slotCount(s), filled = filledCount(s), shots = activeShots(s);
   const tpl = getTemplate(s.layout);
 
@@ -55,8 +69,9 @@ export function CaptureStep() {
   const open = useCallback(async (deviceId: string | null) => {
     const cur = await cam.start({ deviceId, facing: useStore.getState().facing });
     if (cur) setCamError(null);
-    if (cur) useStore.getState().patch({ deviceId: cur.id || null, mirror: !looksRear(cur.label) && useStore.getState().facing === 'user' });
+    if (cur) { useStore.getState().patch({ deviceId: cur.id || null, mirror: !looksRear(cur.label) && useStore.getState().facing === 'user' }); if (cur.id) storage.set('jb-cam', cur.id); }
   }, [cam.start]); // eslint-disable-line react-hooks/exhaustive-deps
+  openRef.current = open;
 
   // another step asked us to open the camera (hero CTA, "Foto ulang")
   useEffect(() => {
