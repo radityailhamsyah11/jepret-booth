@@ -6,6 +6,7 @@ import { SAVE_TOUR, Tour } from './Tour';
 import { IconDownload, IconGif, IconShare, IconVideo } from './Icons';
 
 export function SaveStep() {
+  const locked = useStore(s => s.ldrLocked);
   const { patch, showToast, goStep, restart } = useStore.getState();
   const [png, setPng] = useState<{ blob: Blob; url: string } | null>(null);
   const [live, setLive] = useState<{ blob: Blob; url: string; ext: string } | null>(null);
@@ -97,7 +98,7 @@ export function SaveStep() {
           <button className="out" disabled={!png} onClick={share}><span className="ic"><IconShare /></span><span><strong>Share</strong><small>WhatsApp, IG, dan app lain</small></span></button>
           <p className="note">iPhone / browser dalam app (IG, TikTok)? Tekan lama gambar di kiri lalu pilih <b>Simpan ke Foto</b>.</p>
           <div className="nextbar">
-            <button className="btn" onClick={() => goStep(2)}>← Edit lagi</button>
+            {locked ? <span className="ldr-locked-note">🔒 Desain sesi LDR dipilih host</span> : <button className="btn" onClick={() => goStep(2)}>← Edit lagi</button>}
             <button className="btn soft" onClick={startOver}>Mulai baru</button>
           </div>
         </div>

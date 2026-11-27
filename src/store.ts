@@ -29,7 +29,11 @@ interface State extends Design {
   /** template waiting for an access code (opens the unlock dialog); '' = dialog opened without a template */
   unlockFor: string | null;
   /** landing page, or the full-screen booth */
-  view: 'landing' | 'booth';
+  view: 'landing' | 'booth' | 'room';
+  /** LDR room being joined (from ?room=CODE) */
+  room: { code: string; host: boolean; cap: number } | null;
+  /** result of an LDR session: the host chose the design, so editing is locked for everyone */
+  ldrLocked: boolean;
   toast: { msg: string; key: number } | null;
   busy: string | null;
 }
@@ -68,7 +72,7 @@ export const useStore = create<State & Actions>()((set, get) => ({
   caption: 'jepret booth', font: 'retro' as FontId, showDate: true, shape: 'auto', outline: false,
   stickers: [], selSlot: -1, selSticker: -1,
   sound: storage.get('jb-sound') !== '0', mirror: true, grid: false, timer: 3, facing: 'user', deviceId: storage.get('jb-cam') || null, shootMode: 'burst',
-  step: 1, autoStartCam: false, view: 'landing', unlocked: loadUnlocked(), unlockFor: null, toast: null, busy: null,
+  step: 1, autoStartCam: false, view: 'landing', room: null, ldrLocked: false, unlocked: loadUnlocked(), unlockFor: null, toast: null, busy: null,
 
   patch: p => set(p),
   showToast: msg => set({ toast: { msg, key: ++toastKey } }),
@@ -165,11 +169,12 @@ export const useStore = create<State & Actions>()((set, get) => ({
   goStep: n => {
     const s = get();
     if (n > 1 && filledCount(s) === 0) return;
+    if (s.ldrLocked && n !== 3) { s.showToast('Desain sesi LDR dipilih host. Tekan "Mulai baru" buat foto lagi.'); return; }
     if (n === 3 && !allFilled(s)) s.showToast(`${slotCount(s) - filledCount(s)} slot kosong diisi ulang pakai foto yang udah ada ✨`);
     set({ step: n, selSticker: -1, ...(n === 1 ? { selSlot: -1 } : {}) });
   },
 
-  restart: () => set({ shots: Array(MAX_PHOTOS).fill(null), stickers: [], selSlot: -1, selSticker: -1, target: 0, step: 1 }),
+  restart: () => set({ shots: Array(MAX_PHOTOS).fill(null), stickers: [], selSlot: -1, selSticker: -1, target: 0, step: 1, ldrLocked: false }),
 }));
 
 /** Opens the full-screen booth (adds a history entry so the browser Back button returns to the landing page). */
@@ -178,7 +183,24 @@ export function enterBooth(p: Partial<Pick<State, 'step' | 'autoStartCam'>> = {}
   useStore.getState().patch({ view: 'booth', ...p });
   window.scrollTo(0, 0);
 }
+/** Opens an LDR room (creator = host). The URL carries ?room=CODE so the link can be shared. */
+export function enterRoom(code: string, host: boolean, cap: number) {
+  if (host) { try { sessionStorage.setItem(`jb-host-${code}`, String(cap)); } catch { /* ignore */ } }
+  const url = new URL(location.href); url.searchParams.set('room', code); url.hash = '';
+  history.pushState({ jbRoom: true }, '', url.pathname + url.search);
+  useStore.getState().patch({ view: 'room', room: { code, host, cap } });
+  window.scrollTo(0, 0);
+}
+/** Leaves the room view and drops ?room from the address bar (so a reload doesn't rejoin). */
+export function exitRoom(to: 'landing' | 'booth' = 'landing') {
+  const url = new URL(location.href); url.searchParams.delete('room');
+  history.replaceState(to === 'booth' ? { jbBooth: true } : null, '', url.pathname + url.search + url.hash);
+  useStore.getState().patch({ view: to, room: null });
+  window.scrollTo(0, 0);
+}
+
 export function leaveBooth() {
+  if (useStore.getState().view === 'room') { exitRoom('landing'); return; }
   if (history.state?.jbBooth) history.back(); // popstate switches the view
   else useStore.getState().patch({ view: 'landing' });
 }

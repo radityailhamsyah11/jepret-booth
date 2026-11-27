@@ -50,6 +50,14 @@ src/
 
 Nambah template: tambah satu objek `Template` di `src/lib/templates.ts` (ukuran, slot, `bg`, `decor`) lalu masukin ke array `TEMPLATES`.
 
+## LDR Mode (foto bareng dari jauh)
+
+Host bikin room (2–4 orang) dan bagiin link `?room=KODE`. Semua peserta saling lihat lewat kamera, tamu tekan **Siap**, host milih template + filter lalu mulai. Countdown jalan barengan, tiap perangkat motret kameranya sendiri, dan foto dikirim ke peserta lain lewat **WebRTC data channel**. Hasilnya satu strip dengan desain pilihan host (dikunci biar satu sesi = satu desain).
+
+- **Supabase Realtime** cuma dipakai buat presence dan sinyal WebRTC (offer/answer/ICE). Video dan foto **nggak** lewat server.
+- Config ada di `src/lib/ldr/config.ts` (URL + publishable key, memang aman publik). Tambah TURN server di `ICE_SERVERS` kalau ada jaringan yang susah tembus.
+- Kode room dimuat terpisah (lazy), jadi landing page nggak ikut memuat Supabase.
+
 ## Paket template lokal (opsional)
 
 Taruh file `src/brands/<nama>.ts` buat template khusus (misalnya frame acara kantor atau brand sendiri). Repo ini udah berisi paket **ruparupa** dan **ruparupa Team**. Paket yang nggak boleh publik bisa ditambahin ke `.gitignore` (contohnya `src/brands/azko.ts`); aplikasi tetap jalan normal tanpa file itu. Tiap file meng-export:
