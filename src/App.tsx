@@ -3,7 +3,7 @@ import { CaptureStep } from './components/CaptureStep';
 import { DesignStep } from './components/DesignStep';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
-import { Busy, Features, InfoDialog, Marquee, Toast } from './components/Overlays';
+import { Busy, Features, HowTo, InfoDialog, Marquee, Toast } from './components/Overlays';
 import { SaveStep } from './components/SaveStep';
 import { Stepper } from './components/Stepper';
 import { storage } from './lib/util';
@@ -49,6 +49,7 @@ export default function App() {
           <Marquee />
           <main className="wrap">
             <Hero />
+            <HowTo />
             <Features />
           </main>
           <footer>

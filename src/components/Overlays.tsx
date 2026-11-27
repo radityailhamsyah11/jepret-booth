@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useState } from 'react';
-import { useStore } from '../store';
+import { GROUPS, TEMPLATES } from '../lib/templates';
+import { enterBooth, useStore } from '../store';
 
 export function Toast() {
   const toast = useStore(s => s.toast);
@@ -34,10 +35,13 @@ export const InfoDialog = forwardRef<HTMLDialogElement>(function InfoDialog(_, r
   );
 });
 
+const retroCount = TEMPLATES.filter(t => t.group === 'retro').length;
+const groupNames = GROUPS.filter(g => TEMPLATES.some(t => t.group === g.id)).map(g => g.name);
+
 export function Features() {
   const items = [
     ['01', 'Kamera iPhone', 'Flip cam muter semua kamera: webcam, iPhone lewat Continuity Camera, sampai kamera depan-belakang HP.'],
-    ['02', '17 template retro', 'Kartu remi, tiket bioskop, koran, prangko, film 35mm, zine, sampai strip klasik. Bentuk foto bisa diganti.'],
+    ['02', `${TEMPLATES.length} template`, `${groupNames.join(', ')}. Kartu remi, tiket bioskop, koran, prangko, film 35mm, sampai strip klasik. Bentuk foto bisa diganti.`],
     ['03', 'Video live strip', 'Tiap jepretan direkam, terus diputar barengan di dalam frame. GIF-nya gaya flipbook.'],
     ['04', 'Privat, gratis', 'Semua proses di perangkatmu. Nggak ada upload, watermark, atau login.'],
   ];
@@ -51,8 +55,30 @@ export function Features() {
   );
 }
 
+/** Three-step "how to" right under the hero, so first-timers know where to click. */
+export function HowTo() {
+  const steps = [
+    ['Pilih template', `Klik Masuk booth, terus buka tab Template di panel kanan. Ada ${TEMPLATES.length} pilihan: ${groupNames.join(', ')}.`, '🎞️'],
+    ['Jepret atau upload', 'Nyalain kamera (webcam atau iPhone), pilih Beruntun atau Satu-satu, terus tekan tombol oranye. Bisa juga upload dari galeri.', '📸'],
+    ['Desain & simpan', 'Atur filter, stiker, dan teks, lalu simpan jadi PNG, GIF flipbook, atau video live strip.', '✨'],
+  ];
+  return (
+    <section className="howto" id="cara-pakai" aria-labelledby="howto-title">
+      <div className="howto-head">
+        <h2 className="section-title" id="howto-title">Cara pakai, <em>3 langkah.</em></h2>
+        <button className="btn primary big" onClick={() => enterBooth({ step: 1 })}>Mulai sekarang →</button>
+      </div>
+      <ol className="howto-steps">
+        {steps.map(([h, p, e], i) => (
+          <li key={h}><span className="howto-n">{i + 1}</span><span className="howto-e" aria-hidden="true">{e}</span><h3>{h}</h3><p>{p}</p></li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 export function Marquee() {
-  const words = ['photobooth online', 'foto nggak pernah ke server', '17 template retro', 'video live strip', 'gif flipbook', 'kamera iphone', 'gratis tanpa watermark'];
+  const words = ['photobooth online', 'foto nggak pernah ke server', `${TEMPLATES.length} template`, `${retroCount} template retro`, 'video live strip', 'gif flipbook', 'kamera iphone', 'gratis tanpa watermark'];
   const row = [...words, ...words];
   return <div className="marquee" aria-hidden="true"><div>{row.concat(row).map((w, i) => <span key={i}>{w}</span>)}</div></div>;
 }

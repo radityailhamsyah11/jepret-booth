@@ -5,7 +5,7 @@ import { FILTERS, POSES, type FilterId } from '../lib/config';
 import { drawCover, makeShot } from '../lib/render';
 import { getTemplate, photoAspect } from '../lib/templates';
 import type { Shot } from '../lib/types';
-import { wait } from '../lib/util';
+import { storage, wait } from '../lib/util';
 import { activeShots, allFilled, filledCount, pickFiles, sfx, slotCount, useStore } from '../store';
 import { IconUpload } from './Icons';
 import { LivePreview, TemplatePicker } from './TemplateGallery';
@@ -31,7 +31,10 @@ export function CaptureStep() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const s = useStore();
   const showToast = s.showToast;
-  const cam = useCamera(videoRef, showToast);
+  // camera errors are shown on the stage itself (a toast disappears before people read it)
+  const [camError, setCamError] = useState<string | null>(null);
+  const onCamError = useCallback((msg: string) => setCamError(msg), []);
+  const cam = useCamera(videoRef, onCamError);
   const n = slotCount(s), filled = filledCount(s), shots = activeShots(s);
   const tpl = getTemplate(s.layout);
 
@@ -46,10 +49,18 @@ export function CaptureStep() {
   /** single mode: the slot just shot, waiting for "Ulang" / "Lanjut" */
   const [review, setReview] = useState<number | null>(null);
   const [railTab, setRailTab] = useState<'strip' | 'template'>('strip');
+  const [guide, setGuide] = useState(() => storage.get('jb-guide') !== 'done');
+  const closeGuide = () => { setGuide(false); storage.set('jb-guide', 'done'); };
+  /** template tab; on phones the panel sits below the camera, so bring it into view */
+  const openTemplates = () => {
+    setRailTab('template');
+    if (window.innerWidth <= 860) requestAnimationFrame(() => document.querySelector('.capture-view .rail')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
 
   /** opens a camera and sets mirror to match it (selfie cams mirrored, rear / iPhone not) */
   const open = useCallback(async (deviceId: string | null) => {
     const cur = await cam.start({ deviceId, facing: useStore.getState().facing });
+    if (cur) setCamError(null);
     if (cur) useStore.getState().patch({ deviceId: cur.id || null, mirror: !looksRear(cur.label) && useStore.getState().facing === 'user' });
   }, [cam.start]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -170,9 +181,26 @@ export function CaptureStep() {
     : empties === 0 ? `Foto ulang semua (${n})` : empties === n ? `Jepret semua (${n})` : `Jepret sisa (${empties})`;
   const filters = useMemo(() => Object.keys(FILTERS) as FilterId[], []);
   const reviewShot = review != null ? shots[review] : null;
+  /** the one thing to do next, highlighted with a pulse: open camera → shoot → continue */
+  const next: 'cam' | 'shutter' | 'next' | null = busy || review != null ? null
+    : !cam.live && filled === 0 ? 'cam'
+    : cam.live && filled < n ? 'shutter'
+    : filled > 0 ? 'next' : null;
 
   return (
     <div className="view active capture-view">
+      {guide && (
+        <div className="guide" role="note">
+          <span className="eyebrow"><b>mulai di sini</b></span>
+          <ol>
+            <li className="done"><button className="linkish" onClick={openTemplates}>Template: <b>{tpl.name}</b> · ganti</button></li>
+            <li className={cam.live || filled > 0 ? 'done' : ''}>Nyalain kamera / upload</li>
+            <li className={allFilled(s) ? 'done' : ''}>Tekan tombol oranye</li>
+            <li className={s.step > 1 ? 'done' : ''}>Lanjut desain</li>
+          </ol>
+          <button className="btn sm soft" onClick={closeGuide} aria-label="Tutup panduan">Oke, ngerti</button>
+        </div>
+      )}
       <div className="capture">
         <div className="cap-main">
           <div className="stage-wrap">
@@ -191,8 +219,9 @@ export function CaptureStep() {
                 <span className="eyebrow">booth no. 01 · siap</span>
                 <h3>Siap masuk booth?</h3>
                 <p>Nyalain kamera (webcam atau iPhone kamu), atau upload foto dari galeri. Bisa juga drag &amp; drop foto ke sini.</p>
+                {camError && <p className="cam-error" role="alert">⚠ {camError}</p>}
                 <div className="row">
-                  <button className="btn primary" onClick={() => open(s.deviceId)}>Nyalain kamera</button>
+                  <button className={'btn primary' + (next === 'cam' ? ' pulse' : '')} onClick={() => open(s.deviceId)}>{camError ? 'Coba lagi' : 'Nyalain kamera'}</button>
                   <button className="btn ghost-light" onClick={upload}>Upload foto</button>
                 </div>
               </div>
@@ -240,7 +269,7 @@ export function CaptureStep() {
             </div>
             <div className="shutter-wrap">
               <div className="lbl"><strong>{shutterLbl}</strong><span>{busy ? 'Esc buat batal' : cam.live ? 'Spasi / tap' : 'Nyalain kamera dulu'}</span></div>
-              <button className="shutter" aria-label="Jepret" disabled={!cam.live || busy} onClick={shutter} />
+              <button className={'shutter' + (next === 'shutter' ? ' pulse' : '')} aria-label="Jepret" disabled={!cam.live || busy} onClick={shutter} />
               {s.shootMode === 'burst' && <button className="btn sm" disabled={!cam.live || busy} onClick={() => snap(false)}>Jepret 1</button>}
             </div>
           </div>
@@ -280,7 +309,7 @@ export function CaptureStep() {
           </>}
           <div className="grow" />
           <div className="rail-foot">
-            <button className="btn primary" disabled={filled === 0} onClick={() => s.goStep(2)}>
+            <button className={'btn primary' + (next === 'next' ? ' pulse' : '')} disabled={filled === 0} onClick={() => s.goStep(2)}>
               {allFilled(s) || !filled ? 'Lanjut desain →' : `Lanjut desain (${filled}/${n}) →`}
             </button>
           </div>

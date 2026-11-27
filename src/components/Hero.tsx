@@ -61,7 +61,7 @@ export function Hero() {
           <button className="btn big" onClick={upload}><IconUpload />Upload foto</button>
         </div>
       </div>
-      <a className="scroll-cue" href="#fitur">Lihat fitur ↓</a>
+      <a className="scroll-cue" href="#cara-pakai">Cara pakai <span aria-hidden="true">↓</span></a>
       <div className="fan" aria-hidden="true">
         <Card id="birthday" style={{ ['--r' as string]: '-12deg', ['--x' as string]: '-48%', zIndex: 1 }} />
         <Card id="film35" style={{ ['--r' as string]: '9deg', ['--x' as string]: '46%', zIndex: 2 }} />
