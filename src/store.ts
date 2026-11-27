@@ -21,6 +21,8 @@ interface State extends Design {
   deviceId: string | null;
   /** burst = all empty slots in one go; single = one photo, review, then the next */
   shootMode: 'burst' | 'single';
+  /** light the shot: screen flash for front cams / webcams, torch for rear phone cams */
+  flash: boolean;
   step: Step;
   /** set when another step asks the capture step to open the camera as soon as it mounts */
   autoStartCam: boolean;
@@ -71,7 +73,7 @@ export const useStore = create<State & Actions>()((set, get) => ({
   filter: getTemplate(DEFAULT_TEMPLATE).filter ?? 'natural', grain: 0, frame: 'cream' as FrameId, customBg: '#ff9e7a',
   caption: 'jepret booth', font: 'retro' as FontId, showDate: true, shape: 'auto', outline: false,
   stickers: [], selSlot: -1, selSticker: -1,
-  sound: storage.get('jb-sound') !== '0', mirror: true, grid: false, timer: 3, facing: 'user', deviceId: storage.get('jb-cam') || null, shootMode: 'burst',
+  sound: storage.get('jb-sound') !== '0', mirror: true, grid: false, timer: 3, facing: 'user', deviceId: storage.get('jb-cam') || null, shootMode: 'burst', flash: storage.get('jb-flash') === '1',
   step: 1, autoStartCam: false, view: 'landing', room: null, ldrLocked: false, unlocked: loadUnlocked(), unlockFor: null, toast: null, busy: null,
 
   patch: p => set(p),

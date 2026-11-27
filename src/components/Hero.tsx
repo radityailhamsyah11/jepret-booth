@@ -5,6 +5,7 @@ import type { Design, Shot } from '../lib/types';
 import { fontsReady } from '../lib/util';
 import { allFilled, enterBooth, pickFiles, useStore } from '../store';
 import { IconCamera, IconUpload } from './Icons';
+import { track } from '../lib/track';
 
 
 /** Demo "photos" for the hero fan: soft colour fields with a sitter silhouette. */
@@ -37,8 +38,9 @@ function Card({ id, style }: { id: string; style: React.CSSProperties }) {
 }
 
 export function Hero() {
-  const startCamera = () => enterBooth({ step: 1, autoStartCam: true });
+  const startCamera = () => { track('cta', { where: 'hero', action: 'camera' }); enterBooth({ step: 1, autoStartCam: true }); };
   const upload = async () => {
+    track('cta', { where: 'hero', action: 'upload' });
     const st = useStore.getState();
     const added = await st.loadFiles(await pickFiles(true));
     if (!added) return;

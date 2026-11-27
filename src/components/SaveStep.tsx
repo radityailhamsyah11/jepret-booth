@@ -4,6 +4,7 @@ import { download, fileStamp } from '../lib/util';
 import { designOf, useStore } from '../store';
 import { SAVE_TOUR, Tour } from './Tour';
 import { IconDownload, IconGif, IconShare, IconVideo } from './Icons';
+import { track } from '../lib/track';
 
 export function SaveStep() {
   const locked = useStore(s => s.ldrLocked);
@@ -28,6 +29,7 @@ export function SaveStep() {
   const name = (ext: string) => `jepret-${fileStamp()}.${ext}`;
 
   const share = async () => {
+    track('share', { tpl: useStore.getState().layout });
     if (!png) return;
     const file = new File([png.blob], name('png'), { type: 'image/png' });
     if (navigator.canShare?.({ files: [file] })) {
@@ -36,6 +38,7 @@ export function SaveStep() {
   };
 
   const gif = async () => {
+    track('download', { type: 'gif', tpl: useStore.getState().layout });
     patch({ busy: 'Bikin GIF…' });
     try { download(await makeGif(designOf(useStore.getState())), name('gif')); showToast('GIF tersimpan 🎉'); }
     catch (e) { console.error(e); showToast('Gagal bikin GIF. Coba lagi ya.'); }
@@ -43,6 +46,7 @@ export function SaveStep() {
   };
 
   const video = async () => {
+    track('download', { type: 'video', tpl: useStore.getState().layout });
     const mime = videoSupport();
     if (!mime) { showToast('Browser ini belum bisa rekam video. Pakai PNG / GIF ya.'); return; }
     patch({ busy: 'Merekam video 5 detik…' });
@@ -55,6 +59,7 @@ export function SaveStep() {
   };
 
   const liveVideo = async () => {
+    track('download', { type: 'live', tpl: useStore.getState().layout });
     if (live) { download(live.blob, name(live.ext)); return; }
     const mime = videoSupport();
     if (!mime) { showToast('Browser ini belum bisa rekam video. Pakai PNG / GIF ya.'); return; }
@@ -86,7 +91,7 @@ export function SaveStep() {
             : png && <img src={png.url} alt="Strip foto kamu" />}
         </div>
         <div className="outs">
-          <button className="out primary" disabled={!png} onClick={() => png && download(png.blob, name('png'))}>
+          <button className="out primary" disabled={!png} onClick={() => { if (!png) return; track('download', { type: 'png', tpl: useStore.getState().layout, ldr: locked }); download(png.blob, name('png')); }}>
             <span className="ic"><IconDownload /></span><span><strong>Download PNG</strong><small>Resolusi tinggi, siap cetak</small></span>
           </button>
           <button className="out" onClick={gif}><span className="ic"><IconGif /></span><span><strong>GIF animasi</strong><small>Foto gonta-ganti, cocok buat chat</small></span></button>

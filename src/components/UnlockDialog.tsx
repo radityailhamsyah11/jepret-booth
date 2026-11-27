@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { getTemplate, GROUPS } from '../lib/templates';
 import { enterBooth, useStore } from '../store';
+import { track } from '../lib/track';
 
 const nameOf = (id: string) => GROUPS.find(g => g.id === id)?.name ?? id;
 
@@ -27,6 +28,7 @@ export function UnlockDialog() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const r = useStore.getState().submitCode(code);
+    track('unlock_attempt', { ok: r.ids.length > 0, groups: r.ids.join(','), via: 'dialog' });
     if (r.ids.length) { useStore.getState().showToast(`Frame ${r.ids.map(nameOf).join(' & ')} kebuka ✨`); return; }
     setErr(r.expired ? 'Kode ini udah kedaluwarsa. Minta kode baru ke panitia ya.' : 'Kodenya belum cocok. Cek lagi huruf & angkanya.');
     setShake(x => x + 1);
@@ -74,6 +76,7 @@ export function useCodeFromUrl() {
     url.searchParams.delete('kode');
     history.replaceState(history.state, '', url.pathname + url.search + url.hash);
     const r = useStore.getState().submitCode(code);
+    track('unlock_attempt', { ok: r.ids.length > 0, groups: r.ids.join(','), via: 'link' });
     const st = useStore.getState();
     if (r.ids.length) { st.showToast(`Frame ${r.ids.map(nameOf).join(' & ')} kebuka ✨`); enterBooth({ step: 1 }); }
     else st.showToast(r.expired ? 'Kode di link ini udah kedaluwarsa.' : 'Kode di link ini nggak valid.');

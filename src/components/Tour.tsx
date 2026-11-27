@@ -5,6 +5,7 @@
  */
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { storage } from '../lib/util';
+import { track } from '../lib/track';
 
 export interface TourStep { sel: string; title: string; body: string }
 export type TourId = 'capture' | 'design' | 'save';
@@ -33,7 +34,7 @@ export function Tour({ id, steps, delay = 600 }: { id: TourId; steps: TourStep[]
 
   // start once (after the step has laid out), or again when the user asks for a replay
   useEffect(() => {
-    const start = () => { if (!tourDone(id)) { setI(0); setOn(true); } };
+    const start = () => { if (!tourDone(id)) { setI(0); setOn(true); track('tour_start', { tour: id }); } };
     const t = setTimeout(start, delay);
     window.addEventListener(RESTART, start);
     return () => { clearTimeout(t); window.removeEventListener(RESTART, start); };
@@ -42,7 +43,8 @@ export function Tour({ id, steps, delay = 600 }: { id: TourId; steps: TourStep[]
   const visible = steps.filter(s => document.querySelector(s.sel));
   const step = visible[i];
 
-  const finish = useCallback(() => { setOn(false); storage.set(KEY(id), 'done'); markVisited(); }, [id]);
+  /** skipped = closed before the last step */
+  const finish = useCallback((how: 'done' | 'skip' = 'done') => { setOn(false); storage.set(KEY(id), 'done'); markVisited(); track(how === 'done' ? 'tour_finish' : 'tour_skip', { tour: id, step: i + 1 }); }, [id, i]);
 
   // follow the target: scroll it into view, then track its box on resize/scroll
   useLayoutEffect(() => {
@@ -60,7 +62,7 @@ export function Tour({ id, steps, delay = 600 }: { id: TourId; steps: TourStep[]
   useEffect(() => {
     if (!on) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.stopPropagation(); finish(); }
+      if (e.key === 'Escape') { e.stopPropagation(); finish('skip'); }
       else if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); i < visible.length - 1 ? setI(i + 1) : finish(); }
       else if (e.key === 'ArrowLeft' && i > 0) setI(i - 1);
     };
@@ -90,7 +92,7 @@ export function Tour({ id, steps, delay = 600 }: { id: TourId; steps: TourStep[]
       <div className={'tour-card' + (phone ? ' snack' : '')} style={cardStyle} key={i}>
         <div className="tour-top">
           <span className="eyebrow"><b>tur · {i + 1}/{visible.length}</b></span>
-          <button className="tour-x" onClick={finish} aria-label="Lewati tur">Lewati</button>
+          <button className="tour-x" onClick={() => finish('skip')} aria-label="Lewati tur">Lewati</button>
         </div>
         <h4>{step.title}</h4>
         <p>{step.body}</p>
@@ -109,7 +111,7 @@ export function WelcomeSnack({ onStart }: { onStart: () => void }) {
   const [show, setShow] = useState(false);
   useEffect(() => { const t = setTimeout(() => setShow(isFirstVisit()), 1200); return () => clearTimeout(t); }, []);
   if (!show) return null;
-  const close = (skip: boolean) => { setShow(false); markVisited(); if (skip) skipAllTours(); };
+  const close = (skip: boolean) => { setShow(false); markVisited(); if (skip) skipAllTours(); track('welcome_snack', { action: skip ? 'skip' : 'tour' }); };
   return (
     <div className="welcome-snack" role="status">
       <span className="ws-emoji" aria-hidden="true">👋</span>

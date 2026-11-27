@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import { looksRear, useCamera, type CamDevice } from '../hooks/useCamera';
 import { startClip } from '../lib/clip';
+import { withFlash } from '../lib/flash';
+import { track } from '../lib/track';
 import { FILTERS, POSES, type FilterId } from '../lib/config';
 import { drawCover, makeShot } from '../lib/render';
 import { getTemplate, photoAspect } from '../lib/templates';
@@ -34,7 +36,7 @@ export function CaptureStep() {
   const showToast = s.showToast;
   // camera errors are shown on the stage itself (a toast disappears before people read it)
   const [camError, setCamError] = useState<string | null>(null);
-  const onCamError = useCallback((msg: string) => setCamError(msg), []);
+  const onCamError = useCallback((msg: string) => { setCamError(msg); track('camera_error', { msg: msg.slice(0, 40) }); }, []);
   const cam = useCamera(videoRef, onCamError, {
     // plugging a camera in is a clear intent: switch to it (unless a countdown is running)
     onNewDevice: d => {
@@ -68,7 +70,7 @@ export function CaptureStep() {
   /** opens a camera and sets mirror to match it (selfie cams mirrored, rear / iPhone not) */
   const open = useCallback(async (deviceId: string | null) => {
     const cur = await cam.start({ deviceId, facing: useStore.getState().facing });
-    if (cur) setCamError(null);
+    if (cur) { setCamError(null); track('camera_on', { iphone: /iphone/i.test(cur.label), rear: looksRear(cur.label) }); }
     if (cur) { useStore.getState().patch({ deviceId: cur.id || null, mirror: !looksRear(cur.label) && useStore.getState().facing === 'user' }); if (cur.id) storage.set('jb-cam', cur.id); }
   }, [cam.start]); // eslint-disable-line react-hooks/exhaustive-deps
   openRef.current = open;
@@ -127,7 +129,8 @@ export function CaptureStep() {
       const clip = startClip(cam.streamRef.current);
       const mirrored = useStore.getState().mirror;
       if (!(await countdown(useStore.getState().timer))) { clip?.cancel(); break; }
-      const c = captureFrame(); if (!c) { clip?.cancel(); break; }
+      const c = useStore.getState().flash ? await withFlash(cam.streamRef.current, captureFrame) : captureFrame();
+      if (!c) { clip?.cancel(); break; }
       setFlashKey(f => f + 1); sfx.shutter(); navigator.vibrate?.(30);
       const shot = makeShot(c);
       useStore.getState().setShot(i, shot); last = i;
@@ -139,6 +142,7 @@ export function CaptureStep() {
       if (k < targets.length - 1) await wait(clip ? 500 : 900);
     }
     setPose(null); setCount(null); busyRef.current = false; setBusy(false);
+    track('shoot', { mode: useStore.getState().shootMode, shots: targets.length, flash: useStore.getState().flash, aborted: abortRef.current });
     if (abortRef.current) { showToast('Countdown dibatalin.'); return; }
     if (useStore.getState().shootMode === 'single' && last >= 0) setReview(last);
     else if (allFilled(useStore.getState())) showToast('Strip lengkap! Lanjut desain yuk ✨');
@@ -162,7 +166,7 @@ export function CaptureStep() {
     return () => document.removeEventListener('keydown', onKey);
   }, [cam.live, snap]);
 
-  const upload = async () => { await s.loadFiles(await pickFiles(true)); };
+  const upload = async () => { const n = await s.loadFiles(await pickFiles(true)); if (n) track('upload', { count: n }); };
   const onDrop = async (e: DragEvent) => {
     e.preventDefault(); setDragging(false);
     const added = await s.loadFiles([...e.dataTransfer.files]);
@@ -257,6 +261,7 @@ export function CaptureStep() {
               </div>
               <button className="btn sm soft" aria-pressed={s.mirror} onClick={() => s.patch({ mirror: !s.mirror })}>Mirror</button>
               <button className="btn sm soft" aria-pressed={s.grid} onClick={() => s.patch({ grid: !s.grid })}>Grid</button>
+              <button className="btn sm soft" aria-pressed={s.flash} title="Flash: layar jadi terang pas jepret (kamera belakang HP pakai lampu)" onClick={() => { const v = !s.flash; s.patch({ flash: v }); storage.set('jb-flash', v ? '1' : '0'); track('flash_toggle', { on: v }); }}>⚡ Flash</button>
               <button className="btn sm soft" onClick={flip} title="Ganti kamera (webcam / iPhone / depan-belakang)">⟲ Flip cam</button>
               {cam.devices.length > 1 && (
                 <select className="cam-select" aria-label="Pilih kamera" title="Pakai iPhone? Di Mac, dekatkan iPhone (Continuity Camera), nanti muncul di sini."

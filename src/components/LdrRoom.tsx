@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
+import { withFlash } from '../lib/flash';
 import { composeShot, grabFrame, toBitmap } from '../lib/ldr/compose';
 import { LdrRoom, type Arrange, type Member, type Settings, type StartMsg } from '../lib/ldr/room';
 import { FILTERS, MAX_PHOTOS, type FilterId } from '../lib/config';
 import { getTemplate, photoAspect } from '../lib/templates';
 import { TemplatePicker } from './TemplateGallery';
 import { makeShot } from '../lib/render';
-import { wait } from '../lib/util';
+import { storage, wait } from '../lib/util';
 import { exitRoom, sfx, useStore } from '../store';
+import { track } from '../lib/track';
 
 type Phase = 'camera' | 'lobby' | 'shooting' | 'collecting' | 'full' | 'error';
 
@@ -47,6 +49,7 @@ export function LdrRoomView() {
   const photos = useRef(new Map<string, Map<number, Map<string, Blob>>>()); // session -> shot -> peer -> blob
   const busy = useRef(false);
   const membersRef = useRef<Member[]>([]); membersRef.current = members;
+  const flashOn = useStore(s => s.flash);
 
   // camera + room lifecycle
   useEffect(() => {
@@ -67,6 +70,7 @@ export function LdrRoomView() {
           .listen('photo', (meta, blob) => store(meta.session, meta.shot, meta.from, blob))
           .listen('start', msg => void run(msg));
         await r.join();
+        track('ldr_join', { role: room.host ? 'host' : 'guest', cap: room.cap });
         setPhase('lobby');
       } catch (e) {
         const n = (e as DOMException).name;
@@ -94,8 +98,9 @@ export function LdrRoomView() {
     for (let k = 0; k < msg.shots; k++) {
       setShotLabel(`Foto ${k + 1}/${msg.shots}`);
       for (let n = msg.timer; n > 0; n--) { setCount(n); sfx.beep(n === 1 ? 990 : 660, n === 1 ? 0.16 : 0.08); await wait(1000); }
-      setCount(null); setFlash(f => f + 1); sfx.shutter();
-      const blob = await grabFrame(v, true);
+      setCount(null);
+      const blob = useStore.getState().flash ? await withFlash(localRef.current, () => grabFrame(v, true)) : await grabFrame(v, true);
+      setFlash(f => f + 1); sfx.shutter();
       store(msg.session, k, r.id, blob);
       void r.sendPhoto(msg.session, k, blob);
       if (k < msg.shots - 1) await wait(900);
@@ -132,6 +137,7 @@ export function LdrRoomView() {
       }
     }
     if (!shots.some(Boolean)) { showToast('Foto belum masuk. Coba jepret ulang ya.'); setPhase('lobby'); return; }
+    track('ldr_done', { people: cast.length, got: ready().have, need: msg.shots * cast.length, arrange: msg.arrange });
     if (ready().have < msg.shots * cast.length) showToast('Sebagian foto teman nggak sampai, strip disusun dari yang ada.');
     // one design per session: everyone gets the host's template + filter, and the result is locked
     const st = useStore.getState();
@@ -149,11 +155,12 @@ export function LdrRoomView() {
   const canStart = isHost && phase === 'lobby' && others > 0 && connected === others && readyCount === others;
   const me = members.find(m => m.self);
   const [ready, setReadyState] = useState(false);
-  const toggleReady = async () => { const v = !ready; setReadyState(v); await roomRef.current?.setReady(v); sfx.beep(v ? 880 : 520, 0.06); };
+  const toggleReady = async () => { const v = !ready; setReadyState(v); track('ldr_ready', { on: v }); await roomRef.current?.setReady(v); sfx.beep(v ? 880 : 520, 0.06); };
   const url = inviteUrl(room.code);
 
-  const copy = async () => { try { await navigator.clipboard.writeText(url); showToast('Link room disalin ✨'); } catch { showToast(url); } };
+  const copy = async () => { track('ldr_invite', { via: 'copy' }); try { await navigator.clipboard.writeText(url); showToast('Link room disalin ✨'); } catch { showToast(url); } };
   const share = async () => {
+    track('ldr_invite', { via: 'share' });
     const text = `Yuk foto bareng di jepret. 📸 ${url}`;
     if (navigator.share) { try { await navigator.share({ title: 'jepret. LDR', text, url }); return; } catch { /* cancelled */ } }
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
@@ -164,7 +171,7 @@ export function LdrRoomView() {
   const tplPhotos = getTemplate(settings.layout).photos;
   /** alternate: each person shoots just enough to fill their share of the template's slots */
   const shotsPerPerson = settings.arrange === 'alternate' ? Math.max(1, Math.ceil(tplPhotos / people)) : settings.shots;
-  const start = () => { const r = roomRef.current; if (!r) return; const msg = r.start(settings, shotsPerPerson); void run(msg); };
+  const start = () => { const r = roomRef.current; if (!r) return; track('ldr_start', { people, arrange: settings.arrange, tpl: settings.layout, shots: shotsPerPerson }); const msg = r.start(settings, shotsPerPerson); void run(msg); };
 
   // host: the booth's template/filter pickers drive the session design
   const storeLayout = useStore(s => s.layout), storeFilter = useStore(s => s.filter);
@@ -257,6 +264,7 @@ export function LdrRoomView() {
             </div>
           </>
         )}
+        <button className="btn sm soft ldr-flash-btn" aria-pressed={flashOn} onClick={() => { const v = !flashOn; useStore.getState().patch({ flash: v }); storage.set('jb-flash', v ? '1' : '0'); track('flash_toggle', { on: v, ldr: true }); }}>⚡ Flash {flashOn ? 'nyala' : 'mati'}</button>
         <p className="ldr-privacy">🔒 Video & foto dikirim langsung antar perangkat (WebRTC). Server cuma dipakai buat mempertemukan.</p>
         <button className="btn soft" onClick={leave}>Keluar room</button>
       </aside>

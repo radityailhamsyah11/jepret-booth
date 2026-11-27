@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ROOM_SIZES, type RoomSize } from '../lib/ldr/config';
 import { newRoomCode } from '../lib/ldr/code';
 import { enterRoom } from '../store';
+import { track } from '../lib/track';
 
 /** Landing card: create an LDR room for 2–4 people. */
 export function LdrPromo() {
@@ -18,7 +19,7 @@ export function LdrPromo() {
         <div className="seg" role="radiogroup" aria-label="Jumlah orang">
           {ROOM_SIZES.map(n => <button key={n} role="radio" aria-checked={size === n} aria-pressed={size === n} onClick={() => setSize(n)}>{n} orang</button>)}
         </div>
-        <button className="btn primary big" onClick={() => enterRoom(newRoomCode(), true, size)}>Bikin room →</button>
+        <button className="btn primary big" onClick={() => { track('ldr_create', { size }); enterRoom(newRoomCode(), true, size); }}>Bikin room →</button>
       </div>
     </section>
   );

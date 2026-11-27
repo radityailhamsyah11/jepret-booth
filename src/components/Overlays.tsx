@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useState } from 'react';
 import { GROUPS, TEMPLATES } from '../lib/templates';
+import { setTracking, trackingEnabled } from '../lib/track';
 import { enterBooth, useStore } from '../store';
 
 export function Toast() {
@@ -24,7 +25,8 @@ export const InfoDialog = forwardRef<HTMLDialogElement>(function InfoDialog(_, r
     <dialog ref={ref}>
       <h3>Privasi &amp; tips</h3>
       <ul>
-        <li><b>Fotomu tetap di perangkatmu.</b> Kamera, upload, filter, dan export semuanya jalan di browser. Nggak ada yang dikirim ke server.</li>
+        <li><b>Fotomu tetap di perangkatmu.</b> Kamera, upload, filter, dan export semuanya jalan di browser. Di mode LDR, video & foto dikirim langsung antar perangkat peserta, bukan ke server.</li>
+        <li><b>Statistik anonim:</b> kami nyatet klik anonim (misalnya tombol download atau tur dipakai) buat memperbaiki web ini. Tanpa foto, nama, atau isi teks. <TrackingToggle /></li>
         <li><b>Izin kamera:</b> pilih "Izinkan" waktu browser minta. Kalau ditolak, buka pengaturan situs lalu aktifkan kamera, atau pakai Upload.</li>
         <li><b>Atur foto:</b> di langkah Desain, tap satu foto di preview lalu geser buat atur posisi dan pakai slider buat zoom. Scroll mouse juga bisa buat zoom.</li>
         <li><b>Simpan di iPhone / in-app browser:</b> tekan lama gambar hasil lalu pilih Simpan ke Foto.</li>
@@ -81,4 +83,9 @@ export function Marquee() {
   const words = ['photobooth online', 'foto nggak pernah ke server', `${TEMPLATES.length} template`, `${retroCount} template retro`, 'video live strip', 'gif flipbook', 'kamera iphone', 'gratis tanpa watermark'];
   const row = [...words, ...words];
   return <div className="marquee" aria-hidden="true"><div>{row.concat(row).map((w, i) => <span key={i}>{w}</span>)}</div></div>;
+}
+
+function TrackingToggle() {
+  const [on, setOn] = useState(trackingEnabled());
+  return <button type="button" className="linkish" onClick={() => { setTracking(!on); setOn(!on); }}>{on ? 'Matikan statistik' : 'Nyalakan statistik'}</button>;
 }

@@ -8,6 +8,9 @@ import { SaveStep } from './components/SaveStep';
 import { Stepper } from './components/Stepper';
 import { storage } from './lib/util';
 import { enterBooth, useStore } from './store';
+import { track } from './lib/track';
+import { getTemplate } from './lib/templates';
+import { StatsPage } from './components/StatsPage';
 import { LdrPromo } from './components/LdrPromo';
 import { isRoomCode } from './lib/ldr/code';
 // the room (and Supabase) only loads when someone opens LDR mode
@@ -15,10 +18,22 @@ const LdrRoomView = lazy(() => import('./components/LdrRoom').then(m => ({ defau
 import { WelcomeSnack } from './components/Tour';
 import { UnlockDialog, useCodeFromUrl } from './components/UnlockDialog';
 
+let pageViewSent = false; // StrictMode runs effects twice in dev
+
 export default function App() {
   const step = useStore(s => s.step);
   const view = useStore(s => s.view);
   const infoRef = useRef<HTMLDialogElement>(null);
+  // analytics: one page view, then template / filter / step / view changes
+  useEffect(() => {
+    if (!pageViewSent) { pageViewSent = true; track('page_view', { view: useStore.getState().view, ref: document.referrer ? new URL(document.referrer).hostname : '', mobile: matchMedia('(max-width: 860px)').matches }); }
+    return useStore.subscribe((s, p) => {
+      if (s.layout !== p.layout) track('template_select', { tpl: s.layout, group: getTemplate(s.layout).group });
+      if (s.filter !== p.filter) track('filter_select', { filter: s.filter });
+      if (s.step !== p.step && s.view === 'booth') track('step', { n: s.step, tpl: s.layout });
+      if (s.view !== p.view) track('view', { view: s.view });
+    });
+  }, []);
   // invite links: ?room=CODE opens the room (as host only on the device that created it)
   useEffect(() => {
     const code = new URL(location.href).searchParams.get('room');
@@ -58,6 +73,8 @@ export default function App() {
   }, []);
 
   const info = () => infoRef.current?.showModal();
+
+  if (new URL(location.href).searchParams.has('stats')) return <StatsPage />;
 
   return (
     <>

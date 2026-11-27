@@ -17,6 +17,7 @@ Kamera cuma jalan di `localhost` atau `https`.
 
 ## Fitur
 
+- **Flash**: layar jadi terang pas jepret buat kamera depan/webcam, dan lampu senter buat kamera belakang HP yang ngedukung.
 - **Kamera**: Flip cam muter semua kamera yang ada (webcam, iPhone via Continuity Camera di Mac, depan/belakang HP), plus dropdown pilih kamera. Mode **Beruntun** (semua slot sekaligus) atau **Satu-satu** (jepret, review, ulang/lanjut).
 - **17 template**: 12 retro (Kartu Remi, Memory Lane, Admit One, Zine, Birthday Bash, Red Room, Pas Foto Studio, Vintage Box, The Jepret Times, Prangko, Film 35mm, Neon Star) + 5 klasik.
 - **Bentuk foto**: auto (ikut template), kotak, rounded, oval, bulat, arch, hati, awan, prangko, tiket, die-cut.
@@ -57,6 +58,14 @@ Host bikin room (2–4 orang) dan bagiin link `?room=KODE`. Semua peserta saling
 - **Supabase Realtime** cuma dipakai buat presence dan sinyal WebRTC (offer/answer/ICE). Video dan foto **nggak** lewat server.
 - Config ada di `src/lib/ldr/config.ts` (URL + publishable key, memang aman publik). Tambah TURN server di `ICE_SERVERS` kalau ada jaringan yang susah tembus.
 - Kode room dimuat terpisah (lazy), jadi landing page nggak ikut memuat Supabase.
+
+## Statistik anonim
+
+`track(event, props)` di `src/lib/track.ts` nyatet klik anonim (ID perangkat acak, tanpa foto/nama/teks): tur dipakai atau dilewati, download per jenis, template/filter dipilih, LDR, flash, dll.
+
+- **Lokal:** buka `?stats` buat dashboard event di browser itu (funnel, download, tur, template, 50 event terakhir, export JSON).
+- **Semua pengguna:** event yang sama dikirim ke tabel `events` di Supabase kalau tabelnya ada. SQL buat bikin tabel (insert-only buat publik) dan contoh query ada di halaman `?stats`. Lihat datanya di Supabase → Table Editor / SQL Editor.
+- Pengguna bisa matiin lewat **Privasi & Tips**, dan `Do Not Track` dihormati.
 
 ## Paket template lokal (opsional)
 
