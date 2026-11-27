@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { makeShot, renderStrip } from '../lib/render';
-import { getTemplate, GROUPS, hitSlot, TEMPLATES, type Template } from '../lib/templates';
+import { getTemplate, GROUPS, hitSlot, isLocked, TEMPLATES, type Template } from '../lib/templates';
 import type { Design, Shot } from '../lib/types';
 import { fontsReady } from '../lib/util';
 import { designOf, useStore } from '../store';
@@ -43,9 +43,11 @@ export function TemplateThumb({ id, size = 220 }: { id: string; size?: number })
 
 export function TemplateCard({ t }: { t: Template }) {
   const active = useStore(s => s.layout === t.id);
+  const locked = useStore(s => isLocked(t.id, s.unlocked));
   return (
-    <button className="tpl" aria-pressed={active} onClick={() => useStore.getState().setLayout(t.id)} title={t.desc}>
-      <span className="tpl-art"><TemplateThumb id={t.id} /></span>
+    <button className={'tpl' + (locked ? ' locked' : '')} aria-pressed={active} onClick={() => useStore.getState().setLayout(t.id)}
+      title={locked ? 'Butuh kode akses' : t.desc} aria-label={locked ? `${t.name}, terkunci, butuh kode akses` : undefined}>
+      <span className="tpl-art"><TemplateThumb id={t.id} />{locked && <span className="tpl-lock" aria-hidden="true">🔒<small>pakai kode</small></span>}</span>
       <strong>{t.name}</strong>
       <small>{t.photos} foto · {t.desc}</small>
     </button>
@@ -55,6 +57,7 @@ export function TemplateCard({ t }: { t: Template }) {
 /** Category chips + a scrollable grid of every template (booth side panel). */
 export function TemplatePicker({ onPicked }: { onPicked?: () => void }) {
   const layout = useStore(s => s.layout);
+  const unlocked = useStore(s => s.unlocked);
   const [cat, setCat] = useState<string>(() => getTemplate(useStore.getState().layout).group);
   const groups = GROUPS.filter(g => TEMPLATES.some(t => t.group === g.id));
   const list = cat === 'all' ? TEMPLATES : TEMPLATES.filter(t => t.group === cat);
@@ -64,7 +67,8 @@ export function TemplatePicker({ onPicked }: { onPicked?: () => void }) {
     <div className="tpl-picker">
       <div className="cats" role="tablist" aria-label="Kategori template">
         <button className="chip" aria-pressed={cat === 'all'} onClick={() => setCat('all')}>Semua</button>
-        {groups.map(g => <button key={g.id} className="chip" aria-pressed={cat === g.id} onClick={() => setCat(g.id)}>{g.name}</button>)}
+        {groups.map(g => <button key={g.id} className="chip" aria-pressed={cat === g.id} onClick={() => setCat(g.id)}>{g.lock && !unlocked.includes(g.id) ? '🔒 ' : ''}{g.name}</button>)}
+        {GROUPS.some(g => g.lock) && <button className="chip key-chip" onClick={() => useStore.getState().patch({ unlockFor: '' })}>🔑 Punya kode?</button>}
       </div>
       <div className="tpl-grid">{list.map(t => <TemplateCard key={t.id} t={t} />)}</div>
     </div>

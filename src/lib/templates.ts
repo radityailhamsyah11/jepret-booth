@@ -8,6 +8,7 @@ import { drawFrameBg, frameOf, sparkle, speckle, text, today, vignette, withSlot
 export { withSlot };
 import { heartPath, roundRect, shapePath, starPath } from './shapes';
 import type { Design } from './types';
+import type { GroupLock } from './unlock';
 import { mulberry } from './util';
 
 export interface Mat { l: number; t: number; r: number; b: number; color: string; shape?: ShapeId; shadow?: boolean }
@@ -410,7 +411,11 @@ const neonstar: Template = (() => {
   };
 })();
 
-export interface Group { id: string; name: string; desc: string }
+export interface Group {
+  id: string; name: string; desc: string;
+  /** needs an access code before its templates can be used (see unlock.ts) */
+  lock?: GroupLock;
+}
 
 /**
  * Optional brand packs in src/brands/*.ts (gitignored: third-party logos stay local).
@@ -435,3 +440,9 @@ export const DEFAULT_TEMPLATE = 'film35';
 export const getTemplate = (id: string) => BY_ID.get(id) ?? BY_ID.get(DEFAULT_TEMPLATE)!;
 export const photoCountOf = (id: string) => getTemplate(id).photos;
 export const frameFor = (d: Design) => frameOf(d.frame, d.customBg);
+
+/** true when the template belongs to a locked category this device hasn't unlocked */
+export const isLocked = (id: string, unlocked: string[]) => {
+  const g = GROUPS.find(x => x.id === getTemplate(id).group);
+  return !!g?.lock && !unlocked.includes(g.id);
+};

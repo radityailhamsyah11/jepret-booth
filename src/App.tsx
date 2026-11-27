@@ -9,11 +9,13 @@ import { Stepper } from './components/Stepper';
 import { storage } from './lib/util';
 import { enterBooth, useStore } from './store';
 import { WelcomeSnack } from './components/Tour';
+import { UnlockDialog, useCodeFromUrl } from './components/UnlockDialog';
 
 export default function App() {
   const step = useStore(s => s.step);
   const view = useStore(s => s.view);
   const infoRef = useRef<HTMLDialogElement>(null);
+  useCodeFromUrl();
 
   // browser Back/Forward move between the landing page and the booth
   useEffect(() => {
@@ -73,6 +75,7 @@ export default function App() {
         </div>
       )}
       <InfoDialog ref={infoRef} />
+      <UnlockDialog />
       <Toast />
       <Busy />
     </>

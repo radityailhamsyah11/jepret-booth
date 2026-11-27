@@ -61,6 +61,12 @@ export const templates: Template[] = [/* objek Template, sama kayak di src/lib/t
 
 File berawalan `_` (misalnya `_kit.ts`) dianggap helper dan nggak dimuat sebagai paket. Gambar (logo) di-load lewat `registerAsset`, jadi preview dan export nunggu sampai gambarnya siap.
 
+## Kategori berkode (opsional)
+
+Kategori template bisa dikunci pakai kode akses: tambahin `lock: { codes: [{ h: '<hash>' }] }` di `group` paketnya. Hash dibikin pakai `npm run hash-code -- KODE` (opsional tambah tanggal terakhir berlaku, `YYYY-MM-DD`). Pengguna masukin kodenya sekali, atau buka link `?kode=KODE` (cocok buat QR di acara).
+
+Catatan: ini pagar ringan buat web statis, bukan keamanan. Template dan logonya tetap ikut terkirim ke browser.
+
 ## Kontribusi
 
 PR dan issue welcome, terutama template baru, filter, dan perbaikan buat browser HP.

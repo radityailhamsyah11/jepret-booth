@@ -10,7 +10,8 @@ import { mulberry } from '../lib/util';
 import { nunito } from './_kit';
 import { BL, BL_D, GOLD, INK, L_MARK, L_MARK_WHITE, L_NEW_WHITE, OR, OR_L, drawLogo } from './_rr';
 
-export const group: Group = { id: 'ruparupa-team', name: 'ruparupa Team', desc: 'buat kawan rupa: ID card, anniv, event' };
+// access code hash — regenerate with `npm run hash-code -- <CODE>`
+export const group: Group = { id: 'ruparupa-team', name: 'ruparupa Team', desc: 'buat kawan rupa: ID card, anniv, event', lock: { codes: [{ h: '8f2ee62ce7801f7899dcc058cf28297d2e694cfbe6e6f3bd84664664b4576ff4' }] } };
 
 const n9 = nunito(900), n8 = nunito(800);
 const mono = (px: number) => `500 ${px}px "DM Mono", monospace`;

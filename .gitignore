@@ -9,3 +9,6 @@ legacy/
 # AZKO pack stays local (third-party trademark); ruparupa packs are published
 src/brands/azko.ts
 src/brands/assets/azko-*
+
+# plaintext access codes
+codes.local.txt

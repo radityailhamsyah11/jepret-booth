@@ -3,7 +3,8 @@ import { beep, shutter } from './lib/audio';
 import type { Clip } from './lib/clip';
 import { LABEL_COLORS, MAX_PHOTOS, type FontId, type FrameId } from './lib/config';
 import { makeShot } from './lib/render';
-import { DEFAULT_TEMPLATE, getTemplate, photoCountOf } from './lib/templates';
+import { DEFAULT_TEMPLATE, getTemplate, GROUPS, isLocked, photoCountOf, TEMPLATES } from './lib/templates';
+import { loadUnlocked, relock, tryCode } from './lib/unlock';
 import type { Design, Shot, Sticker } from './lib/types';
 import { clamp, fileToCanvas, mulberry, storage } from './lib/util';
 
@@ -23,6 +24,10 @@ interface State extends Design {
   step: Step;
   /** set when another step asks the capture step to open the camera as soon as it mounts */
   autoStartCam: boolean;
+  /** category ids unlocked on this device */
+  unlocked: string[];
+  /** template waiting for an access code (opens the unlock dialog); '' = dialog opened without a template */
+  unlockFor: string | null;
   /** landing page, or the full-screen booth */
   view: 'landing' | 'booth';
   toast: { msg: string; key: number } | null;
@@ -33,6 +38,9 @@ interface Actions {
   patch: (p: Partial<State>) => void;
   showToast: (msg: string) => void;
   setLayout: (k: string) => void;
+  /** submit an access code; returns the unlocked group ids */
+  submitCode: (code: string) => { ids: string[]; expired: boolean };
+  relockGroup: (id: string) => void;
   setShot: (i: number, shot: Shot | null) => void;
   updateShot: (i: number, p: Partial<Pick<Shot, 'zoom' | 'ox' | 'oy'>>) => void;
   /** attaches a finished recording to slot i, if that slot still holds the shot it was recorded for */
@@ -60,12 +68,32 @@ export const useStore = create<State & Actions>()((set, get) => ({
   caption: 'jepret booth', font: 'retro' as FontId, showDate: true, shape: 'auto', outline: false,
   stickers: [], selSlot: -1, selSticker: -1,
   sound: storage.get('jb-sound') !== '0', mirror: true, grid: false, timer: 3, facing: 'user', deviceId: null, shootMode: 'burst',
-  step: 1, autoStartCam: false, view: 'landing', toast: null, busy: null,
+  step: 1, autoStartCam: false, view: 'landing', unlocked: loadUnlocked(), unlockFor: null, toast: null, busy: null,
 
   patch: p => set(p),
   showToast: msg => set({ toast: { msg, key: ++toastKey } }),
 
+  submitCode: code => {
+    const r = tryCode(code, GROUPS);
+    if (r.ids.length) {
+      const unlocked = loadUnlocked(), pending = get().unlockFor;
+      // open the template that asked for the code, else the first one of the unlocked category
+      const pick = pending && r.ids.includes(getTemplate(pending).group) ? pending : TEMPLATES.find(t => t.group === r.ids[0])?.id;
+      set({ unlocked, unlockFor: null });
+      if (pick) get().setLayout(pick);
+    }
+    return r;
+  },
+  relockGroup: id => {
+    relock(id);
+    const unlocked = loadUnlocked();
+    set({ unlocked });
+    if (isLocked(get().layout, unlocked)) get().setLayout(DEFAULT_TEMPLATE);
+  },
+
   setLayout: k => set(s => {
+    // locked category: ask for the code instead of switching
+    if (isLocked(k, s.unlocked)) return { unlockFor: k };
     const t = getTemplate(k), n = t.photos, shots = [...s.shots];
     // a photo parked beyond this layout's slots moves into an empty slot instead of leaving a gap
     for (let i = 0; i < n; i++) if (!shots[i]) {
