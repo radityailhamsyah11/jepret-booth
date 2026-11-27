@@ -7,7 +7,8 @@ import { Busy, Features, HowTo, InfoDialog, Marquee, Toast } from './components/
 import { SaveStep } from './components/SaveStep';
 import { Stepper } from './components/Stepper';
 import { storage } from './lib/util';
-import { useStore } from './store';
+import { enterBooth, useStore } from './store';
+import { WelcomeSnack } from './components/Tour';
 
 export default function App() {
   const step = useStore(s => s.step);
@@ -52,6 +53,7 @@ export default function App() {
             <HowTo />
             <Features />
           </main>
+          <WelcomeSnack onStart={() => enterBooth({ step: 1 })} />
           <footer>
             <div className="wrap">
               <div className="big" aria-hidden="true">jepret.</div>

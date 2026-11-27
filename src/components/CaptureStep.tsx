@@ -5,10 +5,11 @@ import { FILTERS, POSES, type FilterId } from '../lib/config';
 import { drawCover, makeShot } from '../lib/render';
 import { getTemplate, photoAspect } from '../lib/templates';
 import type { Shot } from '../lib/types';
-import { storage, wait } from '../lib/util';
+import { wait } from '../lib/util';
 import { activeShots, allFilled, filledCount, pickFiles, sfx, slotCount, useStore } from '../store';
 import { IconUpload } from './Icons';
 import { LivePreview, TemplatePicker } from './TemplateGallery';
+import { CAPTURE_TOUR, Tour } from './Tour';
 
 const thumbCache = new WeakMap<HTMLCanvasElement, Map<string, string>>();
 function thumbOf(shot: Shot, aspect: number, width = 240) {
@@ -49,13 +50,6 @@ export function CaptureStep() {
   /** single mode: the slot just shot, waiting for "Ulang" / "Lanjut" */
   const [review, setReview] = useState<number | null>(null);
   const [railTab, setRailTab] = useState<'strip' | 'template'>('strip');
-  const [guide, setGuide] = useState(() => storage.get('jb-guide') !== 'done');
-  const closeGuide = () => { setGuide(false); storage.set('jb-guide', 'done'); };
-  /** template tab; on phones the panel sits below the camera, so bring it into view */
-  const openTemplates = () => {
-    setRailTab('template');
-    if (window.innerWidth <= 860) requestAnimationFrame(() => document.querySelector('.capture-view .rail')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-  };
 
   /** opens a camera and sets mirror to match it (selfie cams mirrored, rear / iPhone not) */
   const open = useCallback(async (deviceId: string | null) => {
@@ -189,18 +183,7 @@ export function CaptureStep() {
 
   return (
     <div className="view active capture-view">
-      {guide && (
-        <div className="guide" role="note">
-          <span className="eyebrow"><b>mulai di sini</b></span>
-          <ol>
-            <li className="done"><button className="linkish" onClick={openTemplates}>Template: <b>{tpl.name}</b> · ganti</button></li>
-            <li className={cam.live || filled > 0 ? 'done' : ''}>Nyalain kamera / upload</li>
-            <li className={allFilled(s) ? 'done' : ''}>Tekan tombol oranye</li>
-            <li className={s.step > 1 ? 'done' : ''}>Lanjut desain</li>
-          </ol>
-          <button className="btn sm soft" onClick={closeGuide} aria-label="Tutup panduan">Oke, ngerti</button>
-        </div>
-      )}
+      <Tour id="capture" steps={CAPTURE_TOUR} />
       <div className="capture">
         <div className="cap-main">
           <div className="stage-wrap">

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { hasClips, makeGif, makeLiveVideo, makePng, makeVideo, videoSupport } from '../lib/exporters';
 import { download, fileStamp } from '../lib/util';
 import { designOf, useStore } from '../store';
+import { SAVE_TOUR, Tour } from './Tour';
 import { IconDownload, IconGif, IconShare, IconVideo } from './Icons';
 
 export function SaveStep() {
@@ -30,7 +31,7 @@ export function SaveStep() {
     const file = new File([png.blob], name('png'), { type: 'image/png' });
     if (navigator.canShare?.({ files: [file] })) {
       try { await navigator.share({ files: [file], title: 'Jepret Booth', text: 'Strip foto dari Jepret Booth 📸' }); } catch { /* user cancelled */ }
-    } else { download(png.blob, file.name); showToast('Share langsung nggak didukung di browser ini, jadi ane download aja ya.'); }
+    } else { download(png.blob, file.name); showToast('Share langsung nggak didukung di browser ini, jadi langsung di-download ya.'); }
   };
 
   const gif = async () => {
@@ -70,6 +71,7 @@ export function SaveStep() {
 
   return (
     <div className="view active">
+      {png && <Tour id="save" steps={SAVE_TOUR} delay={400} />}
       <div className="save">
         <div className="result">
           {live && (

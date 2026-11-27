@@ -481,3 +481,33 @@ header.top.booth-bar .wrap{max-width:none;padding:0 18px;height:60px;display:gri
   .cap-main .controls .group{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);padding-right:24px}
 }
 @media (min-width: 1500px){ .cam-select{max-width:280px} }
+
+/* ================= tour + welcome snackbar ================= */
+.tour{position:fixed;inset:0;z-index:95;pointer-events:none}
+.tour-hole{position:fixed;border-radius:16px;box-shadow:0 0 0 9999px rgba(8,6,5,.66);outline:2px solid var(--mustard);outline-offset:2px;transition:top .3s ease,left .3s ease,width .3s ease,height .3s ease}
+.tour-card{position:fixed;pointer-events:auto;background:var(--surface);color:var(--ink);border:1.5px solid var(--ink);border-radius:18px;padding:14px 16px 14px;box-shadow:5px 5px 0 var(--hard);animation:tour-in .25s ease}
+.tour-card.snack{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));top:auto!important}
+@keyframes tour-in{from{opacity:0;transform:translateY(8px)}}
+.tour-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.tour-x{background:none;border:0;color:var(--muted);font-size:12.5px;font-weight:600;padding:2px 4px}
+.tour-x:hover{color:var(--ink)}
+.tour-card h4{margin:0 0 4px;font:800 19px/1.15 var(--f-display);letter-spacing:-.01em}
+.tour-card p{margin:0 0 12px;color:var(--muted);font-size:14px;line-height:1.45}
+.tour-nav{display:flex;align-items:center;gap:8px}
+.tour-dots{flex:1;display:flex;gap:5px}
+.tour-dots i{width:6px;height:6px;border-radius:50%;background:var(--line-2)}
+.tour-dots i.on{background:var(--accent);width:16px;border-radius:3px}
+.welcome-snack{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;width:min(640px,calc(100vw - 24px));display:flex;align-items:center;gap:14px;
+  background:var(--surface);border:1.5px solid var(--ink);border-radius:18px;padding:12px 12px 12px 16px;box-shadow:5px 5px 0 var(--hard);animation:snack-in .4s cubic-bezier(.2,.8,.2,1)}
+@keyframes snack-in{from{opacity:0;transform:translate(-50%,20px)}}
+.ws-emoji{font-size:26px}
+.ws-text{flex:1;display:flex;flex-direction:column;gap:2px;font-size:13.5px;color:var(--muted)}
+.ws-text strong{color:var(--ink);font-size:15px}
+.ws-actions{display:flex;gap:6px;flex:none}
+@media (max-width: 560px){
+  .welcome-snack{flex-wrap:wrap;gap:10px}
+  .ws-actions{width:100%}
+  .ws-actions .btn{flex:1}
+}
+
+.top-actions .q{font:800 14px var(--f-ui);width:18px;text-align:center}

@@ -4,6 +4,7 @@ import { fillMap, renderStrip, stickerBox } from '../lib/render';
 import { getTemplate, hitSlot as hitTplSlot } from '../lib/templates';
 import { clamp, fontsReady } from '../lib/util';
 import { designOf, pickFiles, useStore } from '../store';
+import { DESIGN_TOUR, Tour } from './Tour';
 import { FilterPanel, FramePanel, SlotEditor, StickerPanel, TemplatePanel, TextPanel } from './DesignPanels';
 
 const TABS = [
@@ -140,6 +141,7 @@ export function DesignStep() {
 
   return (
     <div className="view active">
+      <Tour id="design" steps={DESIGN_TOUR} />
       <div className="studio">
         <div className="preview">
           <canvas ref={canvasRef} aria-label="Preview strip" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} />
